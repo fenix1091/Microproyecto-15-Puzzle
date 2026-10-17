@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'menu_principal.dart';
 
 class PantallaDeCarga extends StatefulWidget {
@@ -29,7 +30,7 @@ class _PantallaDeCargaState extends State<PantallaDeCarga>
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const MenuPrincipal()),
+        MaterialPageRoute(builder: (context) => const MenuPrincipalScreen()),
       );
     });
   }

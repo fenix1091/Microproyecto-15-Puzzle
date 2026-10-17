@@ -9,7 +9,7 @@ class ConfiguracionScreen extends StatefulWidget {
 }
 
 class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
-  int _boardSize = 4; // 
+  int _boardSize = 4;
   bool _isDarkMode = false;
 
   @override
@@ -43,25 +43,48 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final backgroundColor = _isDarkMode
+        ? const Color(0xFF141A16)
+        : const Color(0xFFF4F6F4);
+    final cardColor = _isDarkMode ? const Color(0xFF1E2620) : Colors.white;
+    final textColor = _isDarkMode ? Colors.white : const Color(0xFF222825);
+    final subtitleColor = _isDarkMode ? Colors.white70 : Colors.black54;
+    final primaryColor = const Color(0xFF3B7A57);
+
     return Scaffold(
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: const Text('Configuración'),
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.white,
+        title: Text(
+          'Configuración',
+          style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: IconThemeData(color: textColor),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Tamaño del Tablero',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
             ),
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               child: SegmentedButton<int>(
+                style: SegmentedButton.styleFrom(
+                  selectedBackgroundColor: primaryColor.withValues(alpha: 0.2),
+                  selectedForegroundColor: textColor,
+                  foregroundColor: subtitleColor,
+                  side: BorderSide(color: primaryColor.withValues(alpha: 0.3)),
+                ),
                 segments: const [
                   ButtonSegment(
                     value: 3,
@@ -74,34 +97,46 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                     icon: Icon(Icons.grid_view),
                   ),
                   ButtonSegment(
-                    value:5,
+                    value: 5,
                     label: Text('5 x 5'),
                     icon: Icon(Icons.apps),
                   ),
                 ],
-                  
                 selected: {_boardSize},
                 onSelectionChanged: (Set<int> newSelection) {
                   setState(() {
-                    _boardSize = newSelection.first; 
+                    _boardSize = newSelection.first;
                   });
                 },
               ),
             ),
-            const SizedBox(height: 20),
-            const Text(
+            const SizedBox(height: 24),
+            Text(
               'Ajustes Visuales',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
             ),
             const SizedBox(height: 10),
             Card(
-              elevation: 2,
+              color: cardColor,
+              elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: primaryColor.withValues(alpha: 0.2)),
               ),
               child: SwitchListTile(
-                title: const Text('Modo Oscuro'),
-                secondary: const Icon(Icons.dark_mode),
+                title: Text(
+                  'Modo Oscuro',
+                  style: TextStyle(
+                    color: textColor,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                secondary: Icon(Icons.dark_mode, color: primaryColor),
+                activeThumbColor: primaryColor,
                 value: _isDarkMode,
                 onChanged: (value) {
                   setState(() => _isDarkMode = value);
@@ -111,20 +146,21 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
             const Spacer(),
             SizedBox(
               width: double.infinity,
-              height: 50,
+              height: 52,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
+                  backgroundColor: primaryColor,
                   foregroundColor: Colors.white,
+                  elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                 ),
                 onPressed: _savePreferences,
-                icon: const Icon(Icons.save),
+                icon: const Icon(Icons.save_rounded),
                 label: const Text(
                   'Guardar Ajustes',
-                  style: TextStyle(fontSize: 18),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
