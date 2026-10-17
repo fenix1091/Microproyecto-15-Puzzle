@@ -18,14 +18,14 @@ class _PantallaDeCargaState extends State<PantallaDeCarga>
     super.initState();
 
     _controller = AnimationController(
-      duration: const Duration(seconds: 2),
+      duration: const Duration(seconds: 3),
       vsync: this,
     );
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
     _controller.forward();
 
     // Navegación automática
-    Future.delayed(const Duration(seconds: 3), () {
+    Future.delayed(const Duration(seconds: 4), () {
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
@@ -55,7 +55,7 @@ class _PantallaDeCargaState extends State<PantallaDeCarga>
                 Icon(Icons.extension, size: 100, color: Colors.white),
                 SizedBox(height: 20),
                 Text(
-                  'The 15-Puzzle Flutter Fantasy',
+                  '¡Bienvenido a 15-Puzzle!',
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,

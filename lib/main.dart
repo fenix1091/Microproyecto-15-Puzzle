@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'screens/pantalla_de_carga.dart';
 
 void main() {

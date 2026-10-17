@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
+import 'configuraciones.dart';
+
 class MenuPrincipal extends StatelessWidget {
   const MenuPrincipal({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.deepPurple.shade50,
+      backgroundColor: Colors.lightGreen.shade50,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -14,18 +16,14 @@ class MenuPrincipal extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.extension,
-                  size: 80,
-                  color: Colors.deepPurple,
-                ),
+                const Icon(Icons.extension, size: 80, color: Colors.lightGreen),
                 const SizedBox(height: 16),
                 const Text(
-                  '15-PUZZLE',
+                  '15-Puzzle',
                   style: TextStyle(
                     fontSize: 36,
                     fontWeight: FontWeight.bold,
-                    color: Colors.deepPurple,
+                    color: Colors.lightGreen,
                     letterSpacing: 2,
                   ),
                 ),
@@ -43,9 +41,7 @@ class MenuPrincipal extends StatelessWidget {
                   context,
                   label: 'Marcadores',
                   icon: Icons.leaderboard_rounded,
-                  onPressed: () {
-                    // Aquí enlazaremos la Parte 3 (Marcadores)
-                  },
+                  onPressed: () {},
                 ),
                 const SizedBox(height: 16),
                 _buildMenuButton(
@@ -53,7 +49,11 @@ class MenuPrincipal extends StatelessWidget {
                   label: 'Configuración',
                   icon: Icons.settings_rounded,
                   onPressed: () {
-                    // Aquí enlazaremos la Parte 3.2 (Configuración)
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ConfiguracionScreen()),
+                    );
                   },
                 ),
                 const SizedBox(height: 16),
@@ -61,9 +61,7 @@ class MenuPrincipal extends StatelessWidget {
                   context,
                   label: 'Instrucciones',
                   icon: Icons.help_outline_rounded,
-                  onPressed: () {
-                    // Aquí enlazaremos la Parte 3.4 (Instrucciones)
-                  },
+                  onPressed: () {},
                 ),
               ],
             ),
@@ -84,7 +82,7 @@ class MenuPrincipal extends StatelessWidget {
       height: 55,
       child: ElevatedButton.icon(
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.deepPurple,
+          backgroundColor: Colors.green,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
