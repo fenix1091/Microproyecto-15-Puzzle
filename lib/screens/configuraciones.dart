@@ -9,7 +9,7 @@ class ConfiguracionScreen extends StatefulWidget {
 }
 
 class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
-  int _boardSize = 4;
+  int? _boardSize; // Ahora puede ser null si no hay preferencia guardada
   bool _isDarkMode = false;
 
   @override
@@ -21,14 +21,18 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
   Future<void> _loadPreferences() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _boardSize = prefs.getInt('boardSize') ?? 4;
+      _boardSize = prefs.containsKey('boardSize') ? prefs.getInt('boardSize') : null;
       _isDarkMode = prefs.getBool('isDarkMode') ?? false;
     });
   }
 
   Future<void> _savePreferences() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('boardSize', _boardSize);
+    if (_boardSize != null) {
+      await prefs.setInt('boardSize', _boardSize!);
+    } else {
+      await prefs.remove('boardSize'); // Eliminar preferencia si se desactiva
+    }
     await prefs.setBool('isDarkMode', _isDarkMode);
 
     if (mounted) {
@@ -43,9 +47,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor = _isDarkMode
-        ? const Color(0xFF141A16)
-        : const Color(0xFFF4F6F4);
+    final backgroundColor = _isDarkMode ? const Color(0xFF141A16) : const Color(0xFFF4F6F4);
     final cardColor = _isDarkMode ? const Color(0xFF1E2620) : Colors.white;
     final textColor = _isDarkMode ? Colors.white : const Color(0xFF222825);
     final subtitleColor = _isDarkMode ? Colors.white70 : Colors.black54;
@@ -54,10 +56,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: Text(
-          'Configuración',
-          style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
-        ),
+        title: Text('Configuración', style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: IconThemeData(color: textColor),
@@ -67,18 +66,28 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Tamaño del Tablero',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Tamaño del Tablero por Defecto',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor),
+                ),
+                if (_boardSize != null)
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _boardSize = null;
+                      });
+                    },
+                    child: const Text('Desactivar', style: TextStyle(color: Colors.redAccent)),
+                  ),
+              ],
             ),
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
-              child: SegmentedButton<int>(
+              child: SegmentedButton<int?>(
                 style: SegmentedButton.styleFrom(
                   selectedBackgroundColor: primaryColor.withValues(alpha: 0.2),
                   selectedForegroundColor: textColor,
@@ -103,21 +112,24 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                   ),
                 ],
                 selected: {_boardSize},
-                onSelectionChanged: (Set<int> newSelection) {
+                onSelectionChanged: (Set<int?> newSelection) {
                   setState(() {
                     _boardSize = newSelection.first;
                   });
                 },
               ),
             ),
+            const SizedBox(height: 8),
+            Text(
+              _boardSize == null 
+                ? 'ℹ️ Sin preferencia: Se preguntará al iniciar cada partida.' 
+                : 'ℹ️ Con preferencia: Se iniciará directamente en ${_boardSize}x$_boardSize.',
+              style: TextStyle(fontSize: 13, color: subtitleColor),
+            ),
             const SizedBox(height: 24),
             Text(
               'Ajustes Visuales',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor),
             ),
             const SizedBox(height: 10),
             Card(
@@ -128,13 +140,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                 side: BorderSide(color: primaryColor.withValues(alpha: 0.2)),
               ),
               child: SwitchListTile(
-                title: Text(
-                  'Modo Oscuro',
-                  style: TextStyle(
-                    color: textColor,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                title: Text('Modo Oscuro', style: TextStyle(color: textColor, fontWeight: FontWeight.w500)),
                 secondary: Icon(Icons.dark_mode, color: primaryColor),
                 activeThumbColor: primaryColor,
                 value: _isDarkMode,

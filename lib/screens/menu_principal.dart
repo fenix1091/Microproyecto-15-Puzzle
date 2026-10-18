@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:micro_proyecto_sist/screens/dificultad.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'configuraciones.dart';
 import 'marcadores.dart';
 import 'instrucciones.dart';
+import 'juego.dart';
 
 class MenuPrincipalScreen extends StatefulWidget {
   const MenuPrincipalScreen({super.key});
@@ -68,7 +70,29 @@ class _MenuPrincipalScreenState extends State<MenuPrincipalScreen> {
                 label: 'Jugar',
                 icon: Icons.play_arrow_rounded,
                 primaryColor: primaryColor,
-                onPressed: () {},
+                onPressed: () async {
+                  final prefs = await SharedPreferences.getInstance();
+                  final hasPreference = prefs.containsKey('boardSize');
+                  final isDark = prefs.getBool('isDarkMode') ?? false;
+
+                  if (!context.mounted) return;
+
+                  if (hasPreference) {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => JuegoScreen()),
+                    );
+                  } else {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            SeleccionarDificultadScreen(isDarkMode: isDark),
+                      ),
+                    );
+                  }
+                  _loadPreferences();
+                },
               ),
               const SizedBox(height: 16),
               _buildMenuButton(

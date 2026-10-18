@@ -54,7 +54,7 @@ class _MarcadoresScreenState extends State<MarcadoresScreen> {
                 if (mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Marcadores borrados con éxito')),
+                    const SnackBar(content: Text('Marcadores borrados con éxito')), 
                   );
                 }
               },
