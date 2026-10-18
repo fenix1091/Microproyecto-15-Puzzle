@@ -189,8 +189,8 @@ void main() {
         expect(adaptiveSwitch, findsOneWidget);
 
         final adaptiveSemantics = tester.getSemantics(adaptiveSwitch);
-        // ignore: deprecated_member_use
         expect(
+          // ignore: deprecated_member_use
           adaptiveSemantics.hasFlag(SemanticsFlag.hasEnabledState),
           isTrue,
         );
