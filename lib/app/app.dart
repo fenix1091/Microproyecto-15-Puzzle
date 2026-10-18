@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/settings/application/settings_controller.dart';
 import '../features/settings/domain/entities/user_settings.dart';
+import '../shared/services/audio_feedback_service.dart';
+import 'di/providers.dart';
 import 'router.dart';
 import 'theme/app_theme.dart';
 
@@ -24,13 +26,21 @@ class SlidingPuzzleApp extends ConsumerWidget {
       orElse: () => ThemeMode.system,
     );
 
-    return MaterialApp.router(
-      title: 'Sliding Puzzle',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: themeMode,
-      routerConfig: ref.watch(routerProvider),
+    return Listener(
+      onPointerDown: (_) {
+        final feedback = ref.read(feedbackServiceProvider);
+        if (feedback is AudioFeedbackService) {
+          feedback.recordUserGesture();
+        }
+      },
+      child: MaterialApp.router(
+        title: 'Sliding Puzzle',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: themeMode,
+        routerConfig: ref.watch(routerProvider),
+      ),
     );
   }
 }

@@ -10,30 +10,25 @@ import 'helpers/widget_test_helpers.dart';
 
 void main() {
   group('InstructionsPage Widget Tests', () {
-    testWidgets('renders rules, levels table, and back button labelled Volver', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        createTestApp(
-          child: const InstructionsPage(),
-        ),
-      );
-      await tester.pumpAndSettle();
+    testWidgets(
+      'renders rules, levels table, and back button labelled Volver',
+      (tester) async {
+        await tester.pumpWidget(createTestApp(child: const InstructionsPage()));
+        await tester.pumpAndSettle();
 
-      expect(find.text('¿Cómo jugar?'), findsOneWidget);
-      expect(find.text('Niveles de dificultad'), findsOneWidget);
-      expect(find.text('Dificultad adaptativa'), findsOneWidget);
-      expect(find.text('Fácil'), findsOneWidget);
-      expect(find.text('Maestro'), findsOneWidget);
+        expect(find.text('¿Cómo jugar?'), findsOneWidget);
+        expect(find.text('Niveles de dificultad'), findsOneWidget);
+        expect(find.text('Dificultad adaptativa'), findsOneWidget);
+        expect(find.text('Fácil'), findsOneWidget);
+        expect(find.text('Maestro'), findsOneWidget);
 
-      expect(find.bySemanticsLabel('Volver'), findsOneWidget);
-    });
+        expect(find.bySemanticsLabel('Volver'), findsOneWidget);
+      },
+    );
   });
 
   group('LeaderboardPage Widget Tests', () {
-    testWidgets('renders stats header and tabs for each level', (
-      tester,
-    ) async {
+    testWidgets('renders stats header and tabs for each level', (tester) async {
       const stats = PlayerStats(
         gamesPlayed: 10,
         wins: 8,
@@ -59,9 +54,8 @@ void main() {
         createTestApp(
           overrides: [
             playerStatsProvider.overrideWith((ref) async => stats),
-            leaderboardProvider(DifficultyLevel.easy).overrideWith(
-              (ref) async => easyEntries,
-            ),
+            leaderboardProvider(DifficultyLevel.easy)
+                .overrideWith((ref) async => easyEntries),
             for (final lvl in DifficultyLevel.values.where(
               (l) => l != DifficultyLevel.easy,
             ))

@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../app/router.dart';
+import '../../../../app/routes.dart';
 import '../../../../app/theme/app_theme.dart';
 import '../../../../app/theme/tokens.dart';
 import '../../../../shared/widgets/stat_badge.dart';
 import '../../../leaderboard/application/leaderboard_providers.dart';
+import '../../../settings/application/settings_controller.dart';
+import '../../domain/entities/difficulty_decision.dart';
 import '../../domain/entities/game_result.dart';
 
 /// Screen displayed after a game concludes (won, lost, or abandoned).
@@ -117,6 +119,108 @@ class ResultPage extends ConsumerWidget {
                       ),
                     ),
                   ],
+
+                  // DifficultyDecision trend chip (MED-019)
+                  if (ref
+                          .watch(settingsControllerProvider)
+                          .asData
+                          ?.value
+                          .adaptiveDifficulty ??
+                      true)
+                    ref
+                        .watch(nextDifficultyProvider(result.level))
+                        .maybeWhen(
+                          data: (decision) {
+                            if (decision.trend == DifficultyTrend.promoted) {
+                              return Center(
+                                child: Container(
+                                  margin: const EdgeInsets.only(
+                                    top: AppTokens.spaceSmall,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(
+                                      AppTokens.radiusMedium,
+                                    ),
+                                    border: Border.all(
+                                      color: Colors.green,
+                                      width: 1.2,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.trending_up,
+                                        size: 18,
+                                        color: Colors.green,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        '¡Subiste a ${decision.level.displayName}!',
+                                        style: theme.textTheme.labelLarge
+                                            ?.copyWith(
+                                              color: Colors.green,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            } else if (decision.trend ==
+                                DifficultyTrend.demoted) {
+                              return Center(
+                                child: Container(
+                                  margin: const EdgeInsets.only(
+                                    top: AppTokens.spaceSmall,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.withValues(
+                                      alpha: 0.15,
+                                    ),
+                                    borderRadius: BorderRadius.circular(
+                                      AppTokens.radiusMedium,
+                                    ),
+                                    border: Border.all(
+                                      color: Colors.orange,
+                                      width: 1.2,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.trending_down,
+                                        size: 18,
+                                        color: Colors.orange,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Bajaste a ${decision.level.displayName}',
+                                        style: theme.textTheme.labelLarge
+                                            ?.copyWith(
+                                              color: Colors.orange,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          },
+                          orElse: () => const SizedBox.shrink(),
+                        ),
 
                   const SizedBox(height: AppTokens.spaceLarge),
 

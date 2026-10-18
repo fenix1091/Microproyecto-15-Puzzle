@@ -61,27 +61,9 @@ class _TileViewState extends State<TileView>
     super.dispose();
   }
 
-  bool _isTileHome(int index) {
-    try {
-      return widget.board.isTileHome(index);
-    } catch (_) {
-      return index == widget.tileNumber - 1;
-    }
-  }
+  bool _isTileHome(int index) => widget.board.isTileHome(index);
 
-  bool _canMove(int index) {
-    try {
-      return widget.board.canMove(index);
-    } catch (_) {
-      final size = widget.board.size;
-      final emptyIndex = widget.board.emptyIndex;
-      final r = index ~/ size;
-      final c = index % size;
-      final er = emptyIndex ~/ size;
-      final ec = emptyIndex % size;
-      return (r == er || c == ec) && index != emptyIndex;
-    }
-  }
+  bool _canMove(int index) => widget.board.canMove(index);
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +108,8 @@ class _TileViewState extends State<TileView>
         child: Semantics(
           label: semanticsLabel,
           button: true,
-          enabled: true,
+          enabled: canMove,
+          onTap: canMove ? widget.onTap : null,
           excludeSemantics: true,
           child: AnimatedBuilder(
             animation: _shakeController,

@@ -45,7 +45,7 @@ Definidos en `lib/app/theme/tokens.dart`:
 | Desplazamiento de ficha (`tileMoveDuration`) | **140 ms** | `Curves.easeOutCubic` | Rápido, elástico y satisfactorio |
 | Sacudida de error (`invalidShakeDuration`) | **250 ms** | `Curves.easeInOut` | 3 oscilaciones rápidas en eje X |
 | Pulso de temporizador (<10 s) | **1000 ms** | `Curves.easeInOut` | Latido en rojo de alerta |
-| Transición entre pantallas | **200 ms** | `Curves.easeInOut` | Fade-through suave |
+| Transición entre pantallas (`transitionDuration`) | **250 ms** | `Curves.easeInOut` | Fade-through suave |
 | Logo de Splash | **800 ms** escalonado | `Curves.easeOutBack` | Fichas flotantes que encajan en su sitio |
 
 ### Reducción de Movimiento
@@ -85,16 +85,17 @@ Si `MediaQuery.of(context).disableAnimations` es `true` o `UserSettings.reduceMo
   - Botón **"Pausa"**, botón **"Reiniciar"**, botón **"Salir"**.
 - **Tablero**:
   - `LayoutBuilder` cuadrado responsivo: `min(w, h) * 0.9` hasta un máximo de `560 dp`.
-  - En pantallas horizontales (landscape o desktop ancho ≥ 720 dp), HUD y controles se colocan al lateral en un layout de dos columnas sin desbordamiento.
-  - Soporte de gestos: **Tap** y **Swipe/Arrastre** hacia la celda vacía.
+  - En pantallas horizontales (landscape o desktop ancho ≥ 760 dp), HUD y controles se colocan al lateral en un layout de dos columnas sin desbordamiento.
+  - Soporte de gestos: **Tap** y **Swipe/Arrastre** (evaluado por velocidad o distancia ≥ 24 dp) hacia la celda vacía.
   - Deslizamiento múltiple si se toca una ficha en la misma fila/columna que el hueco.
   - `RepaintBoundary` por cada ficha para optimizar la rasterización a 60/120 FPS.
 - **Overlay de Pausa**:
-  - Fondo semi-transparente que bloquea interacción y oculta el contenido del tablero para evitar trampas visuales mientras el tiempo está pausado.
-  - Botón **"Reanudar"**.
+  - Fondo semi-transparente que bloquea interacción y oculta el contenido del tablero.
+  - Excluye el fondo de la semántica (`ExcludeSemantics`) y toques para evitar duplicidad de botones en el árbol.
+  - Botón **"Reanudar"**, **"Reiniciar"**, **"Salir"**.
 - **Diálogo de Confirmación de Salida**:
   - Botón "Salir" o gesto de atrás (`PopScope`).
-  - Pregunta al usuario si desea abandonar la partida (contará como derrota).
+  - Pregunta al usuario: "Si ya moviste fichas, la partida se registrará como abandono."
   - Al confirmar: ejecuta `abandon()` y navega a `/menu`.
 
 ### 4.4 Pantalla de Resultado (`/result`)
@@ -135,7 +136,7 @@ Si `MediaQuery.of(context).disableAnimations` es `true` o `UserSettings.reduceMo
 ## 5. Contrato de Accesibilidad y Semántica (QA)
 
 Para compatibilidad estricta con Playwright y lectores de pantalla:
-1. **Fichas**: `Semantics(label: "Ficha $n, fila $r, columna $c" (+ ", movible" si canMove), button: true)` (filas y columnas 1-based).
+1. **Fichas**: `Semantics(label: "Ficha $n, fila $r, columna $c" (+ ", movible" si canMove), button: true, onTap: onTap, enabled: canMove)` (filas y columnas 1-based).
 2. **Botones**: `Semantics` o texto exacto:
    `"Jugar"`, `"Marcadores"`, `"Configuración"`, `"Instrucciones"`, `"Pausa"`, `"Reanudar"`, `"Reiniciar"`, `"Salir"`, `"Jugar de nuevo"`, `"Menú"`, `"Volver"`.
 3. **HUD**:

@@ -9,10 +9,12 @@ class AnimatedLogo extends StatefulWidget {
     super.key,
     this.size = 140.0,
     this.animate = true,
+    this.reduceMotion = false,
   });
 
   final double size;
   final bool animate;
+  final bool reduceMotion;
 
   @override
   State<AnimatedLogo> createState() => _AnimatedLogoState();
@@ -39,7 +41,9 @@ class _AnimatedLogoState extends State<AnimatedLogo>
   @override
   void didUpdateWidget(covariant AnimatedLogo oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.animate && !_controller.isAnimating && !_controller.isCompleted) {
+    if (widget.animate &&
+        !_controller.isAnimating &&
+        !_controller.isCompleted) {
       _controller.forward();
     }
   }
@@ -52,7 +56,8 @@ class _AnimatedLogoState extends State<AnimatedLogo>
 
   @override
   Widget build(BuildContext context) {
-    final reduceMotion = MediaQuery.of(context).disableAnimations;
+    final reduceMotion =
+        widget.reduceMotion || MediaQuery.of(context).disableAnimations;
     final colorScheme = Theme.of(context).colorScheme;
     final tileSize = (widget.size - 12) / 2;
 
@@ -70,7 +75,9 @@ class _AnimatedLogoState extends State<AnimatedLogo>
             height: tileSize,
             child: Container(
               decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                color: colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.4,
+                ),
                 borderRadius: BorderRadius.circular(AppTokens.radiusSmall),
                 border: Border.all(
                   color: colorScheme.outline.withValues(alpha: 0.2),

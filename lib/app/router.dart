@@ -8,37 +8,32 @@ import '../features/game/presentation/pages/result_page.dart';
 import '../features/instructions/presentation/instructions_page.dart';
 import '../features/leaderboard/presentation/leaderboard_page.dart';
 import '../features/menu/presentation/menu_page.dart';
+import '../features/settings/application/settings_controller.dart';
 import '../features/settings/presentation/settings_page.dart';
 import '../features/splash/presentation/splash_page.dart';
 import 'di/providers.dart';
+import 'routes.dart';
 import 'theme/tokens.dart';
 
-/// Route paths (contract shared by all features).
-abstract final class AppRoutes {
-  static const splash = '/splash';
-  static const menu = '/menu';
-  static const game = '/game';
-  static const result = '/result';
-  static const leaderboard = '/leaderboard';
-  static const settings = '/settings';
-  static const instructions = '/instructions';
-}
+export 'routes.dart';
 
 Page<dynamic> _buildFadePage({
   required LocalKey key,
   required Widget child,
+  bool reduceMotion = false,
 }) {
+  final duration = reduceMotion ? Duration.zero : AppTokens.transitionDuration;
   return CustomTransitionPage<void>(
     key: key,
     child: child,
-    transitionDuration: AppTokens.transitionDuration,
-    reverseTransitionDuration: AppTokens.transitionDuration,
+    transitionDuration: duration,
+    reverseTransitionDuration: duration,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      if (reduceMotion || MediaQuery.of(context).disableAnimations) {
+        return child;
+      }
       return FadeTransition(
-        opacity: CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeInOut,
-        ),
+        opacity: CurvedAnimation(parent: animation, curve: Curves.easeInOut),
         child: child,
       );
     },
@@ -49,6 +44,9 @@ Page<dynamic> _buildFadePage({
 final routerProvider = Provider<GoRouter>((ref) {
   final refreshNotifier = ValueNotifier<int>(0);
   ref.listen(appDependenciesProvider, (_, _) {
+    refreshNotifier.value++;
+  });
+  ref.listen(settingsControllerProvider, (_, _) {
     refreshNotifier.value++;
   });
   ref.onDispose(refreshNotifier.dispose);
@@ -78,55 +76,95 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: AppRoutes.splash,
-        pageBuilder: (context, state) => _buildFadePage(
-          key: state.pageKey,
-          child: const SplashPage(),
-        ),
+        pageBuilder: (context, state) {
+          final reduceMotion =
+              ref.read(settingsControllerProvider).asData?.value.reduceMotion ??
+              false;
+          return _buildFadePage(
+            key: state.pageKey,
+            child: const SplashPage(),
+            reduceMotion: reduceMotion,
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.menu,
-        pageBuilder: (context, state) => _buildFadePage(
-          key: state.pageKey,
-          child: const MenuPage(),
-        ),
+        pageBuilder: (context, state) {
+          final reduceMotion =
+              ref.read(settingsControllerProvider).asData?.value.reduceMotion ??
+              false;
+          return _buildFadePage(
+            key: state.pageKey,
+            child: const MenuPage(),
+            reduceMotion: reduceMotion,
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.game,
-        pageBuilder: (context, state) => _buildFadePage(
-          key: state.pageKey,
-          child: const GamePage(),
-        ),
+        pageBuilder: (context, state) {
+          final reduceMotion =
+              ref.read(settingsControllerProvider).asData?.value.reduceMotion ??
+              false;
+          return _buildFadePage(
+            key: state.pageKey,
+            child: const GamePage(),
+            reduceMotion: reduceMotion,
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.result,
         pageBuilder: (context, state) {
+          final reduceMotion =
+              ref.read(settingsControllerProvider).asData?.value.reduceMotion ??
+              false;
           final result = state.extra as GameResult;
           return _buildFadePage(
             key: state.pageKey,
             child: ResultPage(result: result),
+            reduceMotion: reduceMotion,
           );
         },
       ),
       GoRoute(
         path: AppRoutes.leaderboard,
-        pageBuilder: (context, state) => _buildFadePage(
-          key: state.pageKey,
-          child: const LeaderboardPage(),
-        ),
+        pageBuilder: (context, state) {
+          final reduceMotion =
+              ref.read(settingsControllerProvider).asData?.value.reduceMotion ??
+              false;
+          return _buildFadePage(
+            key: state.pageKey,
+            child: const LeaderboardPage(),
+            reduceMotion: reduceMotion,
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.settings,
-        pageBuilder: (context, state) => _buildFadePage(
-          key: state.pageKey,
-          child: const SettingsPage(),
-        ),
+        pageBuilder: (context, state) {
+          final reduceMotion =
+              ref.read(settingsControllerProvider).asData?.value.reduceMotion ??
+              false;
+          return _buildFadePage(
+            key: state.pageKey,
+            child: const SettingsPage(),
+            reduceMotion: reduceMotion,
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.instructions,
-        pageBuilder: (context, state) => _buildFadePage(
-          key: state.pageKey,
-          child: const InstructionsPage(),
-        ),
+        pageBuilder: (context, state) {
+          final reduceMotion =
+              ref.read(settingsControllerProvider).asData?.value.reduceMotion ??
+              false;
+          return _buildFadePage(
+            key: state.pageKey,
+            child: const InstructionsPage(),
+            reduceMotion: reduceMotion,
+          );
+        },
       ),
     ],
   );

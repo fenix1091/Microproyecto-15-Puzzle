@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/router.dart';
+import '../../../app/routes.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../app/theme/tokens.dart';
 import '../../game/domain/entities/difficulty_level.dart';
@@ -52,8 +52,8 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
         leading: Semantics(
           label: 'Volver',
           button: true,
+          excludeSemantics: true,
           child: IconButton(
-            tooltip: 'Volver',
             icon: const Icon(Icons.arrow_back_rounded),
             onPressed: () => context.go(AppRoutes.menu),
           ),
@@ -116,7 +116,11 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buildStatCol('Partidas', '${stats.gamesPlayed}', theme),
-            _buildStatCol('Victorias', '${stats.wins} ($winPercentage%)', theme),
+            _buildStatCol(
+              'Victorias',
+              '${stats.wins} ($winPercentage%)',
+              theme,
+            ),
             _buildStatCol('Racha actual', '${stats.winStreak}', theme),
             _buildStatCol('Mejor racha', '${stats.bestWinStreak}', theme),
           ],
@@ -207,7 +211,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
                 ),
               ),
               subtitle: Text(
-                '${entry.moves} movimientos • ${entry.playedAt.day}/${entry.playedAt.month}/${entry.playedAt.year}',
+                '${entry.moves} movimientos • ${entry.playedAt.day.toString().padLeft(2, '0')}/${entry.playedAt.month.toString().padLeft(2, '0')}/${entry.playedAt.year}',
               ),
               trailing: isTop3
                   ? const Icon(Icons.star_rounded, color: AppTheme.goldColor)
@@ -220,9 +224,7 @@ class _LeaderboardPageState extends ConsumerState<LeaderboardPage>
       error: (error, _) => Center(
         child: Text(
           'Error al cargar marcadores: $error',
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: colorScheme.error,
-          ),
+          style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.error),
         ),
       ),
     );

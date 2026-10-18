@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_theme.dart';
 import '../../../../app/theme/tokens.dart';
+import '../../domain/entities/difficulty_decision.dart';
 import '../../domain/entities/game_session.dart';
 
 /// HUD displaying timer, move count, difficulty level, and game controls.
@@ -12,6 +13,7 @@ class GameHud extends StatefulWidget {
     required this.onPause,
     required this.onRestart,
     required this.onExit,
+    this.decision,
     this.isLandscape = false,
     this.reduceMotion = false,
   });
@@ -20,6 +22,7 @@ class GameHud extends StatefulWidget {
   final VoidCallback onPause;
   final VoidCallback onRestart;
   final VoidCallback onExit;
+  final DifficultyDecision? decision;
   final bool isLandscape;
   final bool reduceMotion;
 
@@ -47,12 +50,16 @@ class _GameHudState extends State<GameHud> with SingleTickerProviderStateMixin {
   }
 
   void _checkUrgent() {
+    final isPlaying = widget.session.status == GameStatus.playing;
     final hasLimit = widget.session.config.timeLimit != null;
     final timeDuration = hasLimit
         ? (widget.session.remaining ?? Duration.zero)
         : widget.session.elapsed;
     final isUrgent =
-        hasLimit && timeDuration.inSeconds <= 10 && timeDuration.inSeconds > 0;
+        isPlaying &&
+        hasLimit &&
+        timeDuration.inSeconds <= 10 &&
+        timeDuration.inSeconds > 0;
 
     if (isUrgent && !widget.reduceMotion) {
       if (!_pulseController.isAnimating) {
@@ -83,6 +90,7 @@ class _GameHudState extends State<GameHud> with SingleTickerProviderStateMixin {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final session = widget.session;
+    final isPlaying = session.status == GameStatus.playing;
 
     // Remaining time if countdown; otherwise elapsed
     final hasLimit = session.config.timeLimit != null;
@@ -92,74 +100,105 @@ class _GameHudState extends State<GameHud> with SingleTickerProviderStateMixin {
     final formattedTime = _formatDuration(timeDuration);
 
     final isUrgent =
-        hasLimit && timeDuration.inSeconds <= 10 && timeDuration.inSeconds > 0;
+        isPlaying &&
+        hasLimit &&
+        timeDuration.inSeconds <= 10 &&
+        timeDuration.inSeconds > 0;
 
     final levelName = session.config.level.displayName;
     final boardDimension = '${session.board.size}×${session.board.size}';
 
     // HUD Semantics as specified: "Tiempo {mm:ss}", "Movimientos {n}", "Nivel {nombre}"
-    final hudCards = [
-      // Level
-      Expanded(
-        child: Semantics(
-          label: 'Nivel $levelName',
-          excludeSemantics: true,
-          child: _HudItemCard(
-            title: 'Nivel',
-            value: levelName,
-            subtitle: boardDimension,
-            icon: Icons.grid_view_rounded,
-          ),
-        ),
+    final cardLevel = Semantics(
+      label: 'Nivel $levelName',
+      excludeSemantics: true,
+      child: _HudItemCard(
+        title: 'Nivel',
+        value: levelName,
+        subtitle: boardDimension,
+        icon: Icons.grid_view_rounded,
       ),
-      const SizedBox(width: AppTokens.spaceSmall),
-      // Moves
-      Expanded(
-        child: Semantics(
-          label: 'Movimientos ${session.moves}',
-          excludeSemantics: true,
-          child: _HudItemCard(
-            title: 'Movimientos',
-            value: '${session.moves}',
-            icon: Icons.touch_app_outlined,
-          ),
-        ),
-      ),
-      const SizedBox(width: AppTokens.spaceSmall),
-      // Timer
-      Expanded(
-        child: Semantics(
-          label: 'Tiempo $formattedTime',
-          excludeSemantics: true,
-          child: AnimatedBuilder(
-            animation: _pulseController,
-            builder: (context, child) {
-              final color = isUrgent && !widget.reduceMotion
-                  ? Color.lerp(
-                      colorScheme.error,
-                      colorScheme.errorContainer,
-                      _pulseController.value,
-                    )
-                  : null;
-              final textColor = isUrgent ? colorScheme.error : null;
+    );
 
-              return _HudItemCard(
-                title: hasLimit ? 'Tiempo restante' : 'Tiempo',
-                value: formattedTime,
-                icon: Icons.timer_outlined,
-                backgroundColor: color,
-                textColor: textColor,
-              );
-            },
+    final cardMoves = Semantics(
+      label: 'Movimientos ${session.moves}',
+      excludeSemantics: true,
+      child: _HudItemCard(
+        title: 'Movimientos',
+        value: '${session.moves}',
+        icon: Icons.touch_app_outlined,
+      ),
+    );
+
+    final cardTimer = Semantics(
+      label: 'Tiempo $formattedTime',
+      excludeSemantics: true,
+      child: AnimatedBuilder(
+        animation: _pulseController,
+        builder: (context, child) {
+          final color = isUrgent && !widget.reduceMotion
+              ? Color.lerp(
+                  colorScheme.error,
+                  colorScheme.errorContainer,
+                  _pulseController.value,
+                )
+              : null;
+          final textColor = isUrgent ? colorScheme.error : null;
+
+          return _HudItemCard(
+            title: hasLimit ? 'Tiempo restante' : 'Tiempo',
+            value: formattedTime,
+            icon: Icons.timer_outlined,
+            backgroundColor: color,
+            textColor: textColor,
+          );
+        },
+      ),
+    );
+
+    Widget? trendChip;
+    if (widget.decision != null &&
+        widget.decision!.trend != DifficultyTrend.unchanged) {
+      final isPromoted = widget.decision!.trend == DifficultyTrend.promoted;
+      final color = isPromoted ? Colors.green : Colors.orange;
+      final icon = isPromoted ? Icons.trending_up : Icons.trending_down;
+      final text = isPromoted
+          ? '¡Subiste a ${widget.decision!.level.displayName}!'
+          : 'Bajaste a ${widget.decision!.level.displayName}';
+
+      trendChip = Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(AppTokens.radiusSmall),
+            border: Border.all(color: color, width: 1),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  text,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-      ),
-    ];
+      );
+    }
 
     final controlButtons = [
       FilledButton.tonalIcon(
         key: const Key('game_pause_button'),
-        onPressed: widget.onPause,
+        onPressed: isPlaying ? widget.onPause : null,
         icon: const Icon(Icons.pause_rounded, size: 20),
         label: const Text('Pausa'),
       ),
@@ -178,48 +217,67 @@ class _GameHudState extends State<GameHud> with SingleTickerProviderStateMixin {
     ];
 
     if (widget.isLandscape) {
-      return Container(
-        padding: const EdgeInsets.all(AppTokens.spaceMedium),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (final card in hudCards) ...[
-              card,
+      return RepaintBoundary(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppTokens.spaceSmall),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (trendChip != null) ...[
+                trendChip,
+                const SizedBox(height: AppTokens.spaceSmall),
+              ],
+              cardLevel,
               const SizedBox(height: AppTokens.spaceSmall),
-            ],
-            const Spacer(),
-            for (final btn in controlButtons) ...[
-              btn,
+              cardMoves,
               const SizedBox(height: AppTokens.spaceSmall),
+              cardTimer,
+              const SizedBox(height: AppTokens.spaceMedium),
+              for (final btn in controlButtons) ...[
+                btn,
+                const SizedBox(height: AppTokens.spaceSmall),
+              ],
             ],
-          ],
+          ),
         ),
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppTokens.spaceMedium,
-        vertical: AppTokens.spaceSmall,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(children: hudCards),
-          const SizedBox(height: AppTokens.spaceMedium),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              for (final btn in controlButtons)
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: btn,
-                  ),
-                ),
+    return RepaintBoundary(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppTokens.spaceMedium,
+          vertical: AppTokens.spaceSmall,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (trendChip != null) ...[
+              trendChip,
+              const SizedBox(height: AppTokens.spaceSmall),
             ],
-          ),
-        ],
+            Row(
+              children: [
+                Expanded(child: cardLevel),
+                const SizedBox(width: AppTokens.spaceSmall),
+                Expanded(child: cardMoves),
+                const SizedBox(width: AppTokens.spaceSmall),
+                Expanded(child: cardTimer),
+              ],
+            ),
+            const SizedBox(height: AppTokens.spaceMedium),
+            Row(
+              children: [
+                Expanded(child: controlButtons[0]),
+                const SizedBox(width: AppTokens.spaceSmall),
+                Expanded(child: controlButtons[1]),
+                const SizedBox(width: AppTokens.spaceSmall),
+                Expanded(child: controlButtons[2]),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

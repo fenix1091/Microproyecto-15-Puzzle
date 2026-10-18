@@ -36,9 +36,8 @@ void main() {
       await tester.pumpWidget(
         createTestApp(
           overrides: [
-            personalBestProvider(DifficultyLevel.medium).overrideWith(
-              (ref) async => personalBestEntry,
-            ),
+            personalBestProvider(DifficultyLevel.medium)
+                .overrideWith((ref) async => personalBestEntry),
           ],
           child: ResultPage(result: winResult),
         ),
@@ -63,7 +62,10 @@ void main() {
       expect(find.text('¡Nuevo récord!'), findsNothing);
 
       // Buttons
-      expect(find.widgetWithText(FilledButton, 'Jugar de nuevo'), findsOneWidget);
+      expect(
+        find.widgetWithText(FilledButton, 'Jugar de nuevo'),
+        findsOneWidget,
+      );
       expect(find.widgetWithText(OutlinedButton, 'Menú'), findsOneWidget);
     });
 
@@ -84,9 +86,8 @@ void main() {
       await tester.pumpWidget(
         createTestApp(
           overrides: [
-            personalBestProvider(DifficultyLevel.easy).overrideWith(
-              (ref) async => null,
-            ),
+            personalBestProvider(DifficultyLevel.easy)
+                .overrideWith((ref) async => null),
           ],
           child: ResultPage(result: recordResult),
         ),
@@ -112,9 +113,8 @@ void main() {
       await tester.pumpWidget(
         createTestApp(
           overrides: [
-            personalBestProvider(DifficultyLevel.hard).overrideWith(
-              (ref) async => null,
-            ),
+            personalBestProvider(DifficultyLevel.hard)
+                .overrideWith((ref) async => null),
           ],
           child: ResultPage(result: lossResult),
         ),
@@ -142,9 +142,8 @@ void main() {
       await tester.pumpWidget(
         createTestApp(
           overrides: [
-            personalBestProvider(DifficultyLevel.expert).overrideWith(
-              (ref) async => null,
-            ),
+            personalBestProvider(DifficultyLevel.expert)
+                .overrideWith((ref) async => null),
           ],
           child: ResultPage(result: abandonedResult),
         ),

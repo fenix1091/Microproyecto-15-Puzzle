@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -22,52 +23,49 @@ class _FakeAppDependencies implements AppDependencies {
 
 void main() {
   group('Router Guard & Redirect Tests', () {
-    testWidgets('redirects to /splash until appDependenciesProvider has a value', (
-      tester,
-    ) async {
-      // AsyncLoading state using Completer (no pending timers)
-      final completer = Completer<AppDependencies>();
-      addTearDown(() {
-        if (!completer.isCompleted) {
-          completer.complete(_FakeAppDependencies());
-        }
-      });
+    testWidgets(
+      'redirects to /splash until appDependenciesProvider has a value',
+      (tester) async {
+        // AsyncLoading state using Completer (no pending timers)
+        final completer = Completer<AppDependencies>();
+        addTearDown(() {
+          if (!completer.isCompleted) {
+            completer.complete(_FakeAppDependencies());
+          }
+        });
 
-      final container = ProviderContainer(
-        overrides: [
-          appDependenciesProvider.overrideWith(
-            (ref) => completer.future,
+        final container = ProviderContainer(
+          overrides: [
+            appDependenciesProvider.overrideWith((ref) => completer.future),
+            settingsControllerProvider.overrideWith(
+              () => FakeSettingsController(),
+            ),
+            feedbackServiceProvider.overrideWithValue(
+              const NoopFeedbackService(),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        final router = container.read(routerProvider);
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: MaterialApp.router(routerConfig: router),
           ),
-          settingsControllerProvider.overrideWith(
-            () => FakeSettingsController(),
-          ),
-          feedbackServiceProvider.overrideWithValue(
-            const NoopFeedbackService(),
-          ),
-        ],
-      );
-      addTearDown(container.dispose);
+        );
+        await tester.pump();
 
-      final router = container.read(routerProvider);
+        // Deep link to /game while deps still loading
+        router.go(AppRoutes.game);
+        await tester.pump();
 
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: MaterialApp.router(
-            routerConfig: router,
-          ),
-        ),
-      );
-      await tester.pump();
-
-      // Deep link to /game while deps still loading
-      router.go(AppRoutes.game);
-      await tester.pump();
-
-      // Must be redirected to /splash
-      expect(router.state.matchedLocation, equals(AppRoutes.splash));
-      expect(find.byType(SplashPage), findsOneWidget);
-    });
+        // Must be redirected to /splash
+        expect(router.state.matchedLocation, equals(AppRoutes.splash));
+        expect(find.byType(SplashPage), findsOneWidget);
+      },
+    );
 
     testWidgets('/result without GameResult extra redirects to /menu', (
       tester,
@@ -92,9 +90,7 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: MaterialApp.router(
-            routerConfig: router,
-          ),
+          child: MaterialApp.router(routerConfig: router),
         ),
       );
       await tester.pumpAndSettle();
@@ -131,11 +127,10 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
-          child: MaterialApp.router(
-            routerConfig: router,
-          ),
+          child: MaterialApp.router(routerConfig: router),
         ),
       );
+      await tester.pump(const Duration(milliseconds: 1500));
       await tester.pumpAndSettle();
 
       final result = GameResult(

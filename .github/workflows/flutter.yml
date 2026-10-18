@@ -1,0 +1,47 @@
+name: Flutter CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  analyze-test-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.7
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: dart format --output=none --set-exit-if-changed lib test integration_test
+      - run: flutter analyze
+      - run: flutter test --coverage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/lcov.info
+      - run: flutter build web --release
+
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: analyze-test-build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.7
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      # ubuntu-latest ships Chrome with a matching chromedriver.
+      - run: chromedriver --port=4444 &
+      - run: >
+          flutter drive
+          --driver=test_driver/integration_test.dart
+          --target=integration_test/app_test.dart
+          -d web-server --browser-name=chrome --headless

@@ -21,7 +21,7 @@ class ExitConfirmationDialog extends StatelessWidget {
     return AlertDialog(
       title: const Text('¿Abandonar partida?'),
       content: const Text(
-        'Si sales ahora, la partida en curso se registrará como abandono (derrota).',
+        'Si ya moviste fichas, la partida se registrará como abandono.',
       ),
       actions: [
         OutlinedButton(

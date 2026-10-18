@@ -39,6 +39,34 @@ void main() {
       expect(fakeController.tappedIndices, contains(8));
     });
 
+    testWidgets('accessibility tap action triggers tile move via semantics', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      final fakeController = FakeGameController();
+
+      await tester.pumpWidget(
+        createTestApp(
+          overrides: [
+            gameControllerProvider.overrideWith(() => fakeController),
+          ],
+          child: const GamePage(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final tile7Semantics = find.semantics.byLabel(
+        'Ficha 7, fila 3, columna 1, movible',
+      );
+      expect(tile7Semantics, findsOne);
+
+      tester.semantics.tap(tile7Semantics);
+      await tester.pump();
+
+      expect(fakeController.tappedIndices, contains(6));
+      handle.dispose();
+    });
+
     testWidgets('tile semantics labels follow exact QA contract', (
       tester,
     ) async {
@@ -76,26 +104,27 @@ void main() {
       );
     });
 
-    testWidgets('HUD displays correct semantics for tiempo, movimientos, nivel', (
-      tester,
-    ) async {
-      final fakeController = FakeGameController();
+    testWidgets(
+      'HUD displays correct semantics for tiempo, movimientos, nivel',
+      (tester) async {
+        final fakeController = FakeGameController();
 
-      await tester.pumpWidget(
-        createTestApp(
-          overrides: [
-            gameControllerProvider.overrideWith(() => fakeController),
-          ],
-          child: const GamePage(),
-        ),
-      );
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          createTestApp(
+            overrides: [
+              gameControllerProvider.overrideWith(() => fakeController),
+            ],
+            child: const GamePage(),
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      // Easy limit is 5 mins (300s). Elapsed is 42s -> Remaining is 258s = 04:18
-      expect(find.bySemanticsLabel('Tiempo 04:18'), findsOneWidget);
-      expect(find.bySemanticsLabel('Movimientos 5'), findsOneWidget);
-      expect(find.bySemanticsLabel('Nivel Fácil'), findsOneWidget);
-    });
+        // Easy limit is 5 mins (300s). Elapsed is 42s -> Remaining is 258s = 04:18
+        expect(find.bySemanticsLabel('Tiempo 04:18'), findsOneWidget);
+        expect(find.bySemanticsLabel('Movimientos 5'), findsOneWidget);
+        expect(find.bySemanticsLabel('Nivel Fácil'), findsOneWidget);
+      },
+    );
 
     testWidgets('pause overlay appears and Reanudar resumes the game', (
       tester,

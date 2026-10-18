@@ -98,7 +98,6 @@ class AudioFeedbackService implements FeedbackService {
 
   @override
   void gameLost() {
-    _hasUserGesture = true;
     if (_vibration) {
       try {
         HapticFeedback.mediumImpact();

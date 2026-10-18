@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/router.dart';
+import '../../../app/routes.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../app/theme/tokens.dart';
 import '../../../shared/widgets/animated_logo.dart';
@@ -45,114 +45,102 @@ class MenuPage extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                        const Center(
-                          child: AnimatedLogo(size: 96, animate: false),
-                        ),
-                        const SizedBox(height: AppTokens.spaceMedium),
-                        Text(
-                          'Sliding Puzzle',
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.headlineLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: AppTokens.spaceSmall),
-                        Text(
-                          'Rompecabezas clásico 15-puzzle',
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(height: AppTokens.spaceLarge),
+                  const Center(child: AnimatedLogo(size: 96, animate: false)),
+                  const SizedBox(height: AppTokens.spaceMedium),
+                  Text(
+                    'Sliding Puzzle',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: AppTokens.spaceSmall),
+                  Text(
+                    'Rompecabezas clásico 15-puzzle',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: AppTokens.spaceLarge),
 
-                        // Difficulty level card
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(
-                              AppTokens.spaceMedium,
-                            ),
-                            child: Column(
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Flexible(
-                                      child: Text(
-                                        'Nivel actual',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: theme.textTheme.labelLarge
-                                            ?.copyWith(
-                                              color:
-                                                  colorScheme.onSurfaceVariant,
-                                            ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: AppTokens.spaceSmall),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: isAdaptive
-                                            ? colorScheme.primaryContainer
-                                            : colorScheme.secondaryContainer,
-                                        borderRadius: BorderRadius.circular(
-                                          AppTokens.radiusSmall,
-                                        ),
-                                      ),
-                                      child: Text(
-                                        isAdaptive ? 'Adaptativo' : 'Manual',
-                                        style: theme.textTheme.labelSmall
-                                            ?.copyWith(
-                                              color: isAdaptive
-                                                  ? colorScheme
-                                                      .onPrimaryContainer
-                                                  : colorScheme
-                                                      .onSecondaryContainer,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                      ),
-                                    ),
-                                  ],
+                  // Difficulty level card
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppTokens.spaceMedium),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  'Nivel actual',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.labelLarge?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
                                 ),
-                                const SizedBox(height: AppTokens.spaceSmall),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Flexible(
-                                      child: Text(
-                                        effectiveLevel.displayName,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: theme.textTheme.titleLarge
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                              color: colorScheme.primary,
-                                            ),
-                                      ),
-                                    ),
-                                    if (isAdaptive && nextDecisionAsync != null)
-                                      Flexible(
-                                        child: nextDecisionAsync.maybeWhen(
-                                          data: (decision) => _buildTrendBadge(
-                                            context,
-                                            decision.trend,
-                                          ),
-                                          orElse: () => const SizedBox.shrink(),
-                                        ),
-                                      ),
-                                  ],
+                              ),
+                              const SizedBox(width: AppTokens.spaceSmall),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
                                 ),
-                              ],
-                            ),
+                                decoration: BoxDecoration(
+                                  color: isAdaptive
+                                      ? colorScheme.primaryContainer
+                                      : colorScheme.secondaryContainer,
+                                  borderRadius: BorderRadius.circular(
+                                    AppTokens.radiusSmall,
+                                  ),
+                                ),
+                                child: Text(
+                                  isAdaptive ? 'Adaptativo' : 'Manual',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: isAdaptive
+                                        ? colorScheme.onPrimaryContainer
+                                        : colorScheme.onSecondaryContainer,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
+                          const SizedBox(height: AppTokens.spaceSmall),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  effectiveLevel.displayName,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: colorScheme.primary,
+                                  ),
+                                ),
+                              ),
+                              if (isAdaptive && nextDecisionAsync != null)
+                                Flexible(
+                                  child: nextDecisionAsync.maybeWhen(
+                                    data: (decision) => _buildTrendBadge(
+                                      context,
+                                      decision.trend,
+                                    ),
+                                    orElse: () => const SizedBox.shrink(),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
 
                   const SizedBox(height: AppTokens.spaceXLarge),
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:sliding_puzzle/app/di/providers.dart';
+import 'package:sliding_puzzle/app/routes.dart';
 import 'package:sliding_puzzle/core/services/feedback_service.dart';
 import 'package:sliding_puzzle/features/game/application/game_controller.dart';
 import 'package:sliding_puzzle/features/game/application/game_state.dart';
@@ -97,7 +99,7 @@ class FakeGameController extends GameController {
 
 class FakeSettingsController extends SettingsController {
   FakeSettingsController({UserSettings? initial})
-      : _current = initial ?? const UserSettings();
+    : _current = initial ?? const UserSettings();
 
   UserSettings _current;
   final List<UserSettings Function(UserSettings)> changeCalls = [];
@@ -113,7 +115,7 @@ class FakeSettingsController extends SettingsController {
   }
 }
 
-/// Helper to wrap widgets with standard provider overrides and theme.
+/// Helper to wrap widgets with standard provider overrides, theme, and router.
 Widget createTestApp({
   required Widget child,
   List<dynamic> overrides = const [],
@@ -121,6 +123,26 @@ Widget createTestApp({
 }) {
   final hasSettingsOverride = overrides.any(
     (o) => o.toString().contains('SettingsController'),
+  );
+
+  final testRouter = GoRouter(
+    initialLocation: '/test',
+    routes: [
+      GoRoute(path: '/test', builder: (context, state) => child),
+      GoRoute(
+        path: AppRoutes.menu,
+        builder: (context, state) => const Scaffold(body: Text('Menu Screen')),
+      ),
+      GoRoute(
+        path: AppRoutes.result,
+        builder: (context, state) =>
+            const Scaffold(body: Text('Result Screen')),
+      ),
+      GoRoute(
+        path: AppRoutes.game,
+        builder: (context, state) => const Scaffold(body: Text('Game Screen')),
+      ),
+    ],
   );
 
   return ProviderScope(
@@ -132,8 +154,6 @@ Widget createTestApp({
         ),
       ...overrides.cast(),
     ],
-    child: MaterialApp(
-      home: child,
-    ),
+    child: MaterialApp.router(routerConfig: testRouter),
   );
 }

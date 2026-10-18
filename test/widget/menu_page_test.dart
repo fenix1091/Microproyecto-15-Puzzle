@@ -13,17 +13,19 @@ void main() {
     testWidgets('displays all 4 required buttons with exact labels', (
       tester,
     ) async {
-      await tester.pumpWidget(
-        createTestApp(
-          child: const MenuPage(),
-        ),
-      );
+      await tester.pumpWidget(createTestApp(child: const MenuPage()));
       await tester.pumpAndSettle();
 
       expect(find.widgetWithText(FilledButton, 'Jugar'), findsOneWidget);
       expect(find.widgetWithText(OutlinedButton, 'Marcadores'), findsOneWidget);
-      expect(find.widgetWithText(OutlinedButton, 'Configuración'), findsOneWidget);
-      expect(find.widgetWithText(OutlinedButton, 'Instrucciones'), findsOneWidget);
+      expect(
+        find.widgetWithText(OutlinedButton, 'Configuración'),
+        findsOneWidget,
+      );
+      expect(
+        find.widgetWithText(OutlinedButton, 'Instrucciones'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('shows adaptive level and trend promotion', (tester) async {
@@ -39,9 +41,8 @@ void main() {
             currentLevel: DifficultyLevel.easy,
           ),
           overrides: [
-            nextDifficultyProvider(DifficultyLevel.easy).overrideWith(
-              (ref) async => decision,
-            ),
+            nextDifficultyProvider(DifficultyLevel.easy)
+                .overrideWith((ref) async => decision),
           ],
           child: const MenuPage(),
         ),

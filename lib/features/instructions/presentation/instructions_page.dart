@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/router.dart';
+import '../../../app/routes.dart';
 import '../../../app/theme/tokens.dart';
 
 /// Instructions page detailing game rules, difficulty levels table, and adaptive engine.
@@ -19,8 +19,8 @@ class InstructionsPage extends StatelessWidget {
         leading: Semantics(
           label: 'Volver',
           button: true,
+          excludeSemantics: true,
           child: IconButton(
-            tooltip: 'Volver',
             icon: const Icon(Icons.arrow_back_rounded),
             onPressed: () => context.go(AppRoutes.menu),
           ),

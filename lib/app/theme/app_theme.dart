@@ -55,7 +55,10 @@ abstract final class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize: const Size(AppTokens.minTouchTarget, AppTokens.minTouchTarget),
+          minimumSize: const Size(
+            AppTokens.minTouchTarget,
+            AppTokens.minTouchTarget,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppTokens.radiusMedium),
           ),
@@ -65,7 +68,10 @@ abstract final class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size(AppTokens.minTouchTarget, AppTokens.minTouchTarget),
+          minimumSize: const Size(
+            AppTokens.minTouchTarget,
+            AppTokens.minTouchTarget,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppTokens.radiusMedium),
           ),
@@ -75,7 +81,10 @@ abstract final class AppTheme {
       ),
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
-          minimumSize: const Size(AppTokens.minTouchTarget, AppTokens.minTouchTarget),
+          minimumSize: const Size(
+            AppTokens.minTouchTarget,
+            AppTokens.minTouchTarget,
+          ),
         ),
       ),
       dialogTheme: DialogThemeData(
