@@ -17,6 +17,7 @@ class _JuegoScreenState extends State<JuegoScreen> {
   int _moves = 0;
   bool _isDarkMode = false;
   String _pieceStyle = 'clasico';
+  bool _soundEnabled = true; // Variable para la preferencia de sonido
   bool _isWon = false;
 
   // Imagen de ejemplo para el modo imagen
@@ -55,6 +56,7 @@ class _JuegoScreenState extends State<JuegoScreen> {
                   Brightness.dark);
 
       _pieceStyle = prefs.getString('pieceStyle') ?? 'clasico';
+      _soundEnabled = prefs.getBool('soundEnabled') ?? true;
     });
     _initializeBoard();
   }
@@ -115,6 +117,8 @@ class _JuegoScreenState extends State<JuegoScreen> {
     int emptyIndex = _board.indexOf(0);
     if (_getValidMoves(emptyIndex).contains(index)) {
       if (!_timerRunning) _startTimer();
+
+      // Aquí puedes usar _soundEnabled si deseas reproducir efectos de sonido al mover
 
       setState(() {
         _board[emptyIndex] = _board[index];
@@ -184,7 +188,6 @@ class _JuegoScreenState extends State<JuegoScreen> {
     return '${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
   }
 
-  // Renderiza el fragmento de la imagen recortado correctamente
   Widget _buildImageTile(int tileValue, Color primaryColor) {
     int correctIndex = tileValue - 1;
     int row = correctIndex ~/ _boardSize;

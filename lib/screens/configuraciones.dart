@@ -10,8 +10,10 @@ class ConfiguracionScreen extends StatefulWidget {
 
 class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
   int? _boardSize;
-  String _themeMode = 'automatico';
-  String _pieceStyle = 'clasico';
+  String _themeMode = 'automatico'; // 'claro', 'oscuro', 'automatico'
+  String _pieceStyle = 'clasico'; // 'clasico', 'colorido', 'imagen'
+  bool _soundEnabled =
+      true; // Nuevo: Efectos de sonido activos/inactivos[cite: 6]
 
   @override
   void initState() {
@@ -27,6 +29,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
           : null;
       _themeMode = prefs.getString('themeMode') ?? 'automatico';
       _pieceStyle = prefs.getString('pieceStyle') ?? 'clasico';
+      _soundEnabled = prefs.getBool('soundEnabled') ?? true;
     });
   }
 
@@ -39,6 +42,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
     }
     await prefs.setString('themeMode', _themeMode);
     await prefs.setString('pieceStyle', _pieceStyle);
+    await prefs.setBool('soundEnabled', _soundEnabled);
 
     bool isDark =
         _themeMode == 'oscuro' ||
@@ -141,6 +145,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
             ),
             const SizedBox(height: 24),
 
+            // Tema visual (Claro / Oscuro / Automático)
             Text(
               'Tema Visual',
               style: TextStyle(
@@ -211,8 +216,48 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                 setState(() => _pieceStyle = newSelection.first);
               },
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 24),
 
+            // Efectos de Sonido (sin música, tal como pide la rúbrica)
+            Text(
+              'Audio',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Card(
+              color: cardColor,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: primaryColor.withValues(alpha: 0.2)),
+              ),
+              child: SwitchListTile(
+                title: Text(
+                  'Efectos de Sonido',
+                  style: TextStyle(
+                    color: textColor,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                subtitle: Text(
+                  'Activar o desactivar sonidos al mover piezas[cite: 6]',
+                  style: TextStyle(color: subtitleColor, fontSize: 13),
+                ),
+                secondary: Icon(Icons.volume_up_rounded, color: primaryColor),
+                activeThumbColor: primaryColor,
+                value: _soundEnabled,
+                onChanged: (value) {
+                  setState(() => _soundEnabled = value);
+                },
+              ),
+            ),
+            const SizedBox(height: 30),
+
+            // Botón Guardar
             SizedBox(
               width: double.infinity,
               height: 52,
