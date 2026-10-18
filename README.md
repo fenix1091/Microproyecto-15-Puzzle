@@ -102,7 +102,7 @@ lib/
       presentation/  # páginas y widgets
 ```
 
-La especificación técnica completa está en [`docs/SPEC.md`](docs/SPEC.md). La revisión técnica está en [`docs/REVIEW.md`](docs/REVIEW.md) y el informe de QA en [`docs/QA_REPORT.md`](docs/QA_REPORT.md).
+La especificación técnica completa está en [`docs/SPEC.md`](docs/SPEC.md). La revisión técnica está en [`docs/REVIEW.md`](docs/REVIEW.md) y el informe de QA en [`docs/QA_REPORT.md`](docs/QA_REPORT.md). Los assets (sonidos, iconos, fuentes) y cómo se comportan en el sistema se explican en [`docs/ASSETS.md`](docs/ASSETS.md).
 
 ### Tests
 
