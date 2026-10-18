@@ -105,8 +105,9 @@ void main() {
     });
 
     testWidgets(
-      'HUD displays correct semantics for tiempo, movimientos, nivel',
+      'HUD displays correct individual semantics for tiempo, movimientos, nivel (QA-001)',
       (tester) async {
+        final handle = tester.ensureSemantics();
         final fakeController = FakeGameController();
 
         await tester.pumpWidget(
@@ -120,9 +121,28 @@ void main() {
         await tester.pumpAndSettle();
 
         // Easy limit is 5 mins (300s). Elapsed is 42s -> Remaining is 258s = 04:18
-        expect(find.bySemanticsLabel('Tiempo 04:18'), findsOneWidget);
-        expect(find.bySemanticsLabel('Movimientos 5'), findsOneWidget);
-        expect(find.bySemanticsLabel('Nivel Fácil'), findsOneWidget);
+        final timeFinder = find.bySemanticsLabel('Tiempo 04:18');
+        final movesFinder = find.bySemanticsLabel('Movimientos 5');
+        final levelFinder = find.bySemanticsLabel('Nivel Fácil');
+
+        expect(timeFinder, findsOneWidget);
+        expect(movesFinder, findsOneWidget);
+        expect(levelFinder, findsOneWidget);
+
+        // Verify each metric is its own distinct semantics node (QA-001)
+        final timeNode = tester.getSemantics(timeFinder);
+        final movesNode = tester.getSemantics(movesFinder);
+        final levelNode = tester.getSemantics(levelFinder);
+
+        expect(timeNode.label, equals('Tiempo 04:18'));
+        expect(movesNode.label, equals('Movimientos 5'));
+        expect(levelNode.label, equals('Nivel Fácil'));
+
+        expect(timeNode.id, isNot(equals(movesNode.id)));
+        expect(movesNode.id, isNot(equals(levelNode.id)));
+        expect(timeNode.id, isNot(equals(levelNode.id)));
+
+        handle.dispose();
       },
     );
 

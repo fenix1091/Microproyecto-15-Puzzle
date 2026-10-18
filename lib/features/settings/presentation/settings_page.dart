@@ -169,48 +169,54 @@ class SettingsPage extends ConsumerWidget {
                   ),
                   child: Column(
                     children: [
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Dificultad adaptativa'),
-                        subtitle: const Text(
-                          'Ajusta el nivel automáticamente según tu rendimiento reciente',
+                      Semantics(
+                        container: true,
+                        child: SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('Dificultad adaptativa'),
+                          subtitle: const Text(
+                            'Ajusta el nivel automáticamente según tu rendimiento reciente',
+                          ),
+                          value: settings.adaptiveDifficulty,
+                          onChanged: (val) {
+                            notifier.change(
+                              (s) => s.copyWith(adaptiveDifficulty: val),
+                            );
+                          },
                         ),
-                        value: settings.adaptiveDifficulty,
-                        onChanged: (val) {
-                          notifier.change(
-                            (s) => s.copyWith(adaptiveDifficulty: val),
-                          );
-                        },
                       ),
                       const Divider(height: 1),
                       const SizedBox(height: AppTokens.spaceSmall),
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        enabled: !settings.adaptiveDifficulty,
-                        title: const Text('Nivel manual'),
-                        subtitle: Text(
-                          settings.adaptiveDifficulty
-                              ? 'Desactiva la dificultad adaptativa para elegir manualmente'
-                              : 'Selecciona el nivel fijo que deseas jugar',
-                        ),
-                        trailing: DropdownButton<DifficultyLevel>(
-                          value: settings.manualLevel,
-                          onChanged: settings.adaptiveDifficulty
-                              ? null
-                              : (level) {
-                                  if (level != null) {
-                                    notifier.change(
-                                      (s) => s.copyWith(manualLevel: level),
-                                    );
-                                  }
-                                },
-                          items: [
-                            for (final level in DifficultyLevel.values)
-                              DropdownMenuItem(
-                                value: level,
-                                child: Text(level.displayName),
-                              ),
-                          ],
+                      Semantics(
+                        container: true,
+                        child: ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          enabled: !settings.adaptiveDifficulty,
+                          title: const Text('Nivel manual'),
+                          subtitle: Text(
+                            settings.adaptiveDifficulty
+                                ? 'Desactiva la dificultad adaptativa para elegir manualmente'
+                                : 'Selecciona el nivel fijo que deseas jugar',
+                          ),
+                          trailing: DropdownButton<DifficultyLevel>(
+                            value: settings.manualLevel,
+                            onChanged: settings.adaptiveDifficulty
+                                ? null
+                                : (level) {
+                                    if (level != null) {
+                                      notifier.change(
+                                        (s) => s.copyWith(manualLevel: level),
+                                      );
+                                    }
+                                  },
+                            items: [
+                              for (final level in DifficultyLevel.values)
+                                DropdownMenuItem(
+                                  value: level,
+                                  child: Text(level.displayName),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ],

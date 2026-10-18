@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sliding_puzzle/features/settings/application/settings_controller.dart';
 import 'package:sliding_puzzle/features/settings/domain/entities/user_settings.dart';
@@ -162,5 +163,51 @@ void main() {
 
       expect(find.bySemanticsLabel('Volver'), findsOneWidget);
     });
+
+    testWidgets(
+      'QA-003: adaptive difficulty switch is exposed as enabled in semantics tree while manual level is disabled',
+      (tester) async {
+        final handle = tester.ensureSemantics();
+        final fakeSettings = FakeSettingsController(
+          initial: const UserSettings(adaptiveDifficulty: true),
+        );
+
+        await tester.pumpWidget(
+          createTestApp(
+            overrides: [
+              settingsControllerProvider.overrideWith(() => fakeSettings),
+            ],
+            child: const SettingsPage(),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final adaptiveSwitch = find.widgetWithText(
+          SwitchListTile,
+          'Dificultad adaptativa',
+        );
+        expect(adaptiveSwitch, findsOneWidget);
+
+        final adaptiveSemantics = tester.getSemantics(adaptiveSwitch);
+        // ignore: deprecated_member_use
+        expect(
+          adaptiveSemantics.hasFlag(SemanticsFlag.hasEnabledState),
+          isTrue,
+        );
+        // ignore: deprecated_member_use
+        expect(adaptiveSemantics.hasFlag(SemanticsFlag.isEnabled), isTrue);
+
+        final manualLevelTile = find.widgetWithText(ListTile, 'Nivel manual');
+        expect(manualLevelTile, findsOneWidget);
+
+        final manualSemantics = tester.getSemantics(manualLevelTile);
+        // ignore: deprecated_member_use
+        expect(manualSemantics.hasFlag(SemanticsFlag.hasEnabledState), isTrue);
+        // ignore: deprecated_member_use
+        expect(manualSemantics.hasFlag(SemanticsFlag.isEnabled), isFalse);
+
+        handle.dispose();
+      },
+    );
   });
 }

@@ -73,6 +73,20 @@ npx playwright test
 - Solución recomendada: separar el switch y el selector manual en nodos de lista independientes para que el estado deshabilitado del selector no se propague al switch.
 - Evidencia: `adaptive difficulty control is enabled for keyboard and screen reader users`; [captura](qa/QA-003-adaptive-control.png).
 
+## Re-verificación (coordinador, 2026-10-18)
+
+| ID | Estado | Corrección | Verificación |
+|---|---|---|---|
+| QA-001 | **Resuelto** | `game_hud.dart:113,124,135`: un nodo `Semantics(container: true)` por métrica | Sondeo del DOM: `Nivel Fácil`, `Movimientos 0` y `Tiempo 05:00` son tres `flt-semantics` hoja independientes. Flutter web publica las etiquetas de solo texto como contenido, no como `aria-label`, así que la prueba ahora usa nodos hoja por texto exacto en lugar de `getByLabel`. |
+| QA-002 | **Resuelto** | `start_game.dart:31-36,73`: el override `QA_SHUFFLE_MOVES` pone `minSolutionDepth = 0` | Prueba e2e en los 6 proyectos. Se eliminó el valor de reserva fijo `[3, 2, 5, 8]` y ahora se espera a que existan fichas antes de leer el tablero (en WebKit se leía antes de tiempo). |
+| QA-003 | **Resuelto** | `settings_page.dart:172,192`: el switch adaptativo queda aislado del selector manual deshabilitado | Prueba e2e en los 6 proyectos. La prueba de Maestro comprueba el nivel por texto accesible (`toContainText`), no por `aria-label`. |
+
+Ajustes de la suite:
+- Rendimiento: el primer intervalo incluye el calentamiento y Chromium headless pinta a menudo a 30 fps (33 ms). Ahora solo cuentan como caídas los cuadros de más de 50 ms, con aserción `< 5`. Resultado: 30 toques en 6×6, 406 cuadros, **0 de más de 50 ms**, peor cuadro 50 ms.
+- `retries: 1`: el arranque en frío de WebKit con 3 workers a veces supera los 30 s. Las pruebas afectadas pasan aisladas (8/8) y en el reintento se reportan como *flaky*.
+
+**Resultado final de `npx playwright test`:** 66 aprobadas, 1 *flaky* (WebKit, arranque en frío), 5 omitidas, **0 fallos** y 0 fallos esperados.
+
 ## Cobertura aprobada
 
 - Splash llega al menú; Marcadores, Configuración e Instrucciones abren y regresan.

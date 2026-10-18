@@ -128,11 +128,11 @@ async function findSolution(page) {
 }
 
 test('QA_SHUFFLE_MOVES=1 creates a one-move board', async ({ page }, testInfo) => {
-  test.fail(true, 'QA-002: the QA one-move build does not generate a one-move board');
   await openMenu(page, 8181);
   await page.getByRole('button', { name: 'Jugar' }).click();
   if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'docs/qa/QA-002-shuffle-distance.png', fullPage: true });
-  expect((await findSolution(page)) ?? [3, 2, 5, 8]).toHaveLength(1);
+  await expect(page.getByRole('button', { name: /^Ficha / }).first()).toBeVisible();
+  expect(await findSolution(page)).toHaveLength(1);
 });
 
 test('timeout build produces defeat result', async ({ page }) => {
@@ -173,10 +173,10 @@ test('Maestro 6x6 supports 30 rapid tile taps with frame sampling', async ({ pag
   const maestro = page.getByRole('menuitem', { name: 'Maestro' });
   await expect(maestro).toBeVisible();
   await maestro.click();
-  await expect(level).toHaveAttribute('aria-label', /Maestro/);
+  await expect(level).toContainText('Maestro');
   await page.reload();
   await page.getByRole('button', { name: 'Configuración' }).click();
-  await expect(page.getByRole('button', { name: /Nivel manual/ })).toHaveAttribute('aria-label', /Maestro/);
+  await expect(page.getByRole('button', { name: /Nivel manual/ })).toContainText('Maestro');
   await page.getByRole('button', { name: 'Volver' }).click();
   await page.getByRole('button', { name: 'Jugar' }).click();
   await expect(page.getByText(/Nivel Maestro/).first()).toBeVisible();
@@ -199,23 +199,29 @@ test('Maestro 6x6 supports 30 rapid tile taps with frame sampling', async ({ pag
   }
   const elapsed = Date.now() - start;
   const frameGaps = await page.evaluate(() => { window.__qaSampling = false; return window.__qaFrameGaps; });
-  console.log(`30 taps: ${elapsed} ms; sampled frames ${frameGaps.length}; drops >32ms ${frameGaps.filter(gap => gap > 32).length}`);
+  // The first gap includes warm-up; headless Chromium often paints at 30 fps
+  // (33 ms), so only gaps over 50 ms count as dropped frames.
+  const steady = frameGaps.slice(1);
+  const drops = steady.filter(gap => gap > 50).length;
+  console.log(`30 taps: ${elapsed} ms; frames ${frameGaps.length}; >50ms ${drops}; worst ${Math.round(Math.max(...steady))} ms`);
+  expect(drops).toBeLessThan(5);
   expect(elapsed).toBeLessThan(45000);
   expect(frameGaps.length).toBeGreaterThan(0);
 });
 
 test('HUD exposes the required individual accessible labels', async ({ page }, testInfo) => {
-  test.fail(true, 'QA-001: HUD labels are merged into unnamed group in semantics tree');
   await openMenu(page);
   await page.getByRole('button', { name: 'Jugar' }).click();
   if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'docs/qa/QA-001-hud-semantics.png', fullPage: true });
-  await expect(page.getByLabel('Movimientos 0')).toBeVisible();
-  await expect(page.getByLabel(/^Tiempo /)).toBeVisible();
-  await expect(page.getByLabel(/^Nivel /)).toBeVisible();
+  // Flutter web renders label-only semantics nodes as text content (no
+  // aria-label), so assert one dedicated leaf node per metric by exact text.
+  const leaf = text => page.locator('flt-semantics:not(:has(flt-semantics))').filter({ hasText: text });
+  await expect(leaf(/^Movimientos 0$/)).toHaveCount(1);
+  await expect(leaf(/^Tiempo \d\d:\d\d$/)).toHaveCount(1);
+  await expect(leaf(/^Nivel \S+$/)).toHaveCount(1);
 });
 
 test('adaptive difficulty control is enabled for keyboard and screen reader users', async ({ page }, testInfo) => {
-  test.fail(true, 'QA-003: adaptive difficulty is exposed as disabled in the semantics tree');
   await openMenu(page);
   await page.getByRole('button', { name: 'Configuración' }).click();
   if (testInfo.project.name === 'chromium') await page.screenshot({ path: 'docs/qa/QA-003-adaptive-control.png', fullPage: true });

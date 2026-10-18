@@ -110,6 +110,7 @@ class _GameHudState extends State<GameHud> with SingleTickerProviderStateMixin {
 
     // HUD Semantics as specified: "Tiempo {mm:ss}", "Movimientos {n}", "Nivel {nombre}"
     final cardLevel = Semantics(
+      container: true,
       label: 'Nivel $levelName',
       excludeSemantics: true,
       child: _HudItemCard(
@@ -121,6 +122,7 @@ class _GameHudState extends State<GameHud> with SingleTickerProviderStateMixin {
     );
 
     final cardMoves = Semantics(
+      container: true,
       label: 'Movimientos ${session.moves}',
       excludeSemantics: true,
       child: _HudItemCard(
@@ -131,6 +133,7 @@ class _GameHudState extends State<GameHud> with SingleTickerProviderStateMixin {
     );
 
     final cardTimer = Semantics(
+      container: true,
       label: 'Tiempo $formattedTime',
       excludeSemantics: true,
       child: AnimatedBuilder(
