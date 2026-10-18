@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'juego.dart';
 
 class SeleccionarDificultadScreen extends StatelessWidget {
@@ -7,14 +8,19 @@ class SeleccionarDificultadScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor = isDarkMode ? const Color(0xFF141A16) : const Color(0xFFF4F6F4);
+    final backgroundColor = isDarkMode
+        ? const Color(0xFF141A16)
+        : const Color(0xFFF4F6F4);
     final textColor = isDarkMode ? Colors.white : const Color(0xFF222825);
     final primaryColor = const Color(0xFF3B7A57);
 
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: Text('Seleccionar Dificultad', style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
+        title: Text(
+          'Seleccionar Dificultad',
+          style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: IconThemeData(color: textColor),
@@ -28,12 +34,19 @@ class SeleccionarDificultadScreen extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               '¿Cómo quieres jugar?',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textColor),
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               'Elige el tamaño del tablero para tu partida',
-              style: TextStyle(fontSize: 15, color: isDarkMode ? Colors.white70 : Colors.black54),
+              style: TextStyle(
+                fontSize: 15,
+                color: isDarkMode ? Colors.white70 : Colors.black54,
+              ),
             ),
             const SizedBox(height: 40),
             _buildDifficultyButton(
@@ -105,8 +118,21 @@ class SeleccionarDificultadScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
-                Text(subtitle, style: TextStyle(fontSize: 13, color: isDark ? Colors.white60 : Colors.black54)),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? Colors.white60 : Colors.black54,
+                  ),
+                ),
               ],
             ),
           ],

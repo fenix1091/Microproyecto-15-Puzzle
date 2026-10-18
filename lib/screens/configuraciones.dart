@@ -9,8 +9,9 @@ class ConfiguracionScreen extends StatefulWidget {
 }
 
 class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
-  int? _boardSize; // Ahora puede ser null si no hay preferencia guardada
-  bool _isDarkMode = false;
+  int? _boardSize;
+  String _themeMode = 'automatico';
+  String _pieceStyle = 'clasico';
 
   @override
   void initState() {
@@ -21,8 +22,11 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
   Future<void> _loadPreferences() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _boardSize = prefs.containsKey('boardSize') ? prefs.getInt('boardSize') : null;
-      _isDarkMode = prefs.getBool('isDarkMode') ?? false;
+      _boardSize = prefs.containsKey('boardSize')
+          ? prefs.getInt('boardSize')
+          : null;
+      _themeMode = prefs.getString('themeMode') ?? 'automatico';
+      _pieceStyle = prefs.getString('pieceStyle') ?? 'clasico';
     });
   }
 
@@ -31,14 +35,22 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
     if (_boardSize != null) {
       await prefs.setInt('boardSize', _boardSize!);
     } else {
-      await prefs.remove('boardSize'); // Eliminar preferencia si se desactiva
+      await prefs.remove('boardSize');
     }
-    await prefs.setBool('isDarkMode', _isDarkMode);
+    await prefs.setString('themeMode', _themeMode);
+    await prefs.setString('pieceStyle', _pieceStyle);
+
+    bool isDark =
+        _themeMode == 'oscuro' ||
+        (_themeMode == 'automatico' &&
+            WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+                Brightness.dark);
+    await prefs.setBool('isDarkMode', isDark);
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Configuración guardada correctamente'),
+          content: Text('Configuración guardada en persistencia local'),
           duration: Duration(seconds: 2),
         ),
       );
@@ -47,109 +59,160 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor = _isDarkMode ? const Color(0xFF141A16) : const Color(0xFFF4F6F4);
-    final cardColor = _isDarkMode ? const Color(0xFF1E2620) : Colors.white;
-    final textColor = _isDarkMode ? Colors.white : const Color(0xFF222825);
-    final subtitleColor = _isDarkMode ? Colors.white70 : Colors.black54;
+    bool isDark =
+        _themeMode == 'oscuro' ||
+        (_themeMode == 'automatico' &&
+            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+
+    final backgroundColor = isDark
+        ? const Color(0xFF141A16)
+        : const Color(0xFFF4F6F4);
+    final cardColor = isDark ? const Color(0xFF1E2620) : Colors.white;
+    final textColor = isDark ? Colors.white : const Color(0xFF222825);
+    final subtitleColor = isDark ? Colors.white70 : Colors.black54;
     final primaryColor = const Color(0xFF3B7A57);
 
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: Text('Configuración', style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
+        title: Text(
+          'Configuración',
+          style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: IconThemeData(color: textColor),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: ListView(
           children: [
+            // Tamaño de Tablero
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   'Tamaño del Tablero por Defecto',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
                 ),
                 if (_boardSize != null)
                   TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _boardSize = null;
-                      });
-                    },
-                    child: const Text('Desactivar', style: TextStyle(color: Colors.redAccent)),
+                    onPressed: () => setState(() => _boardSize = null),
+                    child: const Text(
+                      'Preguntar al iniciar',
+                      style: TextStyle(color: Colors.redAccent),
+                    ),
                   ),
               ],
             ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: SegmentedButton<int?>(
-                style: SegmentedButton.styleFrom(
-                  selectedBackgroundColor: primaryColor.withValues(alpha: 0.2),
-                  selectedForegroundColor: textColor,
-                  foregroundColor: subtitleColor,
-                  side: BorderSide(color: primaryColor.withValues(alpha: 0.3)),
-                ),
-                segments: const [
-                  ButtonSegment(
-                    value: 3,
-                    label: Text('3 x 3'),
-                    icon: Icon(Icons.grid_3x3),
-                  ),
-                  ButtonSegment(
-                    value: 4,
-                    label: Text('4 x 4'),
-                    icon: Icon(Icons.grid_view),
-                  ),
-                  ButtonSegment(
-                    value: 5,
-                    label: Text('5 x 5'),
-                    icon: Icon(Icons.apps),
-                  ),
-                ],
-                selected: {_boardSize},
-                onSelectionChanged: (Set<int?> newSelection) {
-                  setState(() {
-                    _boardSize = newSelection.first;
-                  });
-                },
+            const SizedBox(height: 10),
+            SegmentedButton<int?>(
+              style: SegmentedButton.styleFrom(
+                selectedBackgroundColor: primaryColor.withValues(alpha: 0.2),
+                selectedForegroundColor: textColor,
+                foregroundColor: subtitleColor,
+                side: BorderSide(color: primaryColor.withValues(alpha: 0.3)),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _boardSize == null 
-                ? 'ℹ️ Sin preferencia: Se preguntará al iniciar cada partida.' 
-                : 'ℹ️ Con preferencia: Se iniciará directamente en ${_boardSize}x$_boardSize.',
-              style: TextStyle(fontSize: 13, color: subtitleColor),
+              segments: const [
+                ButtonSegment(
+                  value: 3,
+                  label: Text('3x3 (Fácil)'),
+                  icon: Icon(Icons.grid_3x3),
+                ),
+                ButtonSegment(
+                  value: 4,
+                  label: Text('4x4 (Medio)'),
+                  icon: Icon(Icons.grid_view),
+                ),
+                ButtonSegment(
+                  value: 5,
+                  label: Text('5x5 (Difícil)'),
+                  icon: Icon(Icons.apps),
+                ),
+              ],
+              selected: {_boardSize},
+              onSelectionChanged: (Set<int?> newSelection) {
+                setState(() => _boardSize = newSelection.first);
+              },
             ),
             const SizedBox(height: 24),
+
             Text(
-              'Ajustes Visuales',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor),
+              'Tema Visual',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
             ),
             const SizedBox(height: 10),
-            Card(
-              color: cardColor,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: primaryColor.withValues(alpha: 0.2)),
+            SegmentedButton<String>(
+              style: SegmentedButton.styleFrom(
+                selectedBackgroundColor: primaryColor.withValues(alpha: 0.2),
+                selectedForegroundColor: textColor,
+                foregroundColor: subtitleColor,
+                side: BorderSide(color: primaryColor.withValues(alpha: 0.3)),
               ),
-              child: SwitchListTile(
-                title: Text('Modo Oscuro', style: TextStyle(color: textColor, fontWeight: FontWeight.w500)),
-                secondary: Icon(Icons.dark_mode, color: primaryColor),
-                activeThumbColor: primaryColor,
-                value: _isDarkMode,
-                onChanged: (value) {
-                  setState(() => _isDarkMode = value);
-                },
+              segments: const [
+                ButtonSegment(
+                  value: 'claro',
+                  label: Text('Claro'),
+                  icon: Icon(Icons.light_mode),
+                ),
+                ButtonSegment(
+                  value: 'oscuro',
+                  label: Text('Oscuro'),
+                  icon: Icon(Icons.dark_mode),
+                ),
+                ButtonSegment(
+                  value: 'automatico',
+                  label: Text('Auto'),
+                  icon: Icon(Icons.brightness_auto),
+                ),
+              ],
+              selected: {_themeMode},
+              onSelectionChanged: (Set<String> newSelection) {
+                setState(() => _themeMode = newSelection.first);
+              },
+            ),
+            const SizedBox(height: 24),
+
+            // Estilos de visualización de las piezas
+            Text(
+              'Estilo de las Piezas',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: textColor,
               ),
             ),
-            const Spacer(),
+            const SizedBox(height: 10),
+            SegmentedButton<String>(
+              style: SegmentedButton.styleFrom(
+                selectedBackgroundColor: primaryColor.withValues(alpha: 0.2),
+                selectedForegroundColor: textColor,
+                foregroundColor: subtitleColor,
+                side: BorderSide(color: primaryColor.withValues(alpha: 0.3)),
+              ),
+              segments: const [
+                ButtonSegment(value: 'clasico', label: Text('Clásico')),
+                ButtonSegment(
+                  value: 'colorido',
+                  label: Text('Colorido (Retro)'),
+                ),
+                ButtonSegment(value: 'imagen', label: Text('Imagen')),
+              ],
+              selected: {_pieceStyle},
+              onSelectionChanged: (Set<String> newSelection) {
+                setState(() => _pieceStyle = newSelection.first);
+              },
+            ),
+            const SizedBox(height: 40),
+
             SizedBox(
               width: double.infinity,
               height: 52,

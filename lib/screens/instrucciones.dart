@@ -26,14 +26,19 @@ class _InstruccionesScreenState extends State<InstruccionesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor = _isDarkMode ? const Color(0xFF141A16) : const Color(0xFFF4F6F4);
+    final backgroundColor = _isDarkMode
+        ? const Color(0xFF141A16)
+        : const Color(0xFFF4F6F4);
     final textColor = _isDarkMode ? Colors.white : const Color(0xFF222825);
     final primaryColor = const Color(0xFF3B7A57);
 
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: Text('Instrucciones / Cómo Jugar', style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
+        title: Text(
+          'Instrucciones / Cómo Jugar',
+          style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: IconThemeData(color: textColor),
@@ -81,14 +86,28 @@ class _InstruccionesScreenState extends State<InstruccionesScreen> {
     return ListTile(
       leading: CircleAvatar(
         backgroundColor: primaryColor,
-        child: Text(step, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        child: Text(
+          step,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
-      title: Text(title, style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
+      title: Text(
+        title,
+        style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+      ),
       subtitle: Padding(
         padding: const EdgeInsets.only(top: 6.0),
-        child: Text(subtitle, style: TextStyle(color: _isDarkMode ? Colors.white70 : Colors.black87, height: 1.4)),
+        child: Text(
+          subtitle,
+          style: TextStyle(
+            color: _isDarkMode ? Colors.white70 : Colors.black87,
+            height: 1.4,
+          ),
+        ),
       ),
     );
   }
 }
-

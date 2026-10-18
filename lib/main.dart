@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'screens/pantalla_de_carga.dart';
 
+import 'screens/pantalla_de_carga.dart';
 
 void main() {
   runApp(const MyApp());

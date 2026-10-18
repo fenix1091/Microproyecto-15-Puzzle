@@ -12,13 +12,16 @@ class JuegoScreen extends StatefulWidget {
 }
 
 class _JuegoScreenState extends State<JuegoScreen> {
-  int _boardSize = 4; // Por defecto 4x4 (15-puzzle)
+  int _boardSize = 4;
   List<int> _board = [];
   int _moves = 0;
   bool _isDarkMode = false;
+  String _pieceStyle = 'clasico';
   bool _isWon = false;
 
-  // Cronómetro
+  // Imagen de ejemplo para el modo imagen
+  final String _sampleImageUrl = 'https://picsum.photos/id/1015/600/600';
+
   Timer? _timer;
   int _secondsElapsed = 0;
   bool _timerRunning = false;
@@ -38,12 +41,20 @@ class _JuegoScreenState extends State<JuegoScreen> {
   Future<void> _loadSettingsAndInitGame() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _isDarkMode = prefs.getBool('isDarkMode') ?? false;
       if (widget.forcedBoardSize != null) {
         _boardSize = widget.forcedBoardSize!;
       } else {
         _boardSize = prefs.getInt('boardSize') ?? 4;
       }
+
+      String themeMode = prefs.getString('themeMode') ?? 'automatico';
+      _isDarkMode =
+          themeMode == 'oscuro' ||
+          (themeMode == 'automatico' &&
+              WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+                  Brightness.dark);
+
+      _pieceStyle = prefs.getString('pieceStyle') ?? 'clasico';
     });
     _initializeBoard();
   }
@@ -51,7 +62,6 @@ class _JuegoScreenState extends State<JuegoScreen> {
   void _initializeBoard() {
     int totalTiles = _boardSize * _boardSize;
     _board = List.generate(totalTiles, (index) => (index + 1) % totalTiles);
-
     _moves = 0;
     _isWon = false;
     _secondsElapsed = 0;
@@ -63,34 +73,30 @@ class _JuegoScreenState extends State<JuegoScreen> {
   }
 
   void _shuffleBoard() {
-    // Hacemos N * 30 movimientos aleatorios válidos
     int emptyIndex = _board.indexOf(0);
     int shuffleSteps = _boardSize * 50;
 
     for (int i = 0; i < shuffleSteps; i++) {
       List<int> validMoves = _getValidMoves(emptyIndex);
-      // Elegir un movimiento aleatorio válido
       int randomMove =
           validMoves[(DateTime.now().millisecondsSinceEpoch) %
               validMoves.length];
 
-      // Intercambiar
       _board[emptyIndex] = _board[randomMove];
       _board[randomMove] = 0;
       emptyIndex = randomMove;
     }
   }
 
-  // Obtiene los índices adyacentes que se pueden mover al espacio vacío
   List<int> _getValidMoves(int emptyIndex) {
     List<int> valid = [];
     int row = emptyIndex ~/ _boardSize;
     int col = emptyIndex % _boardSize;
 
-    if (row > 0) valid.add(emptyIndex - _boardSize); // Arriba
-    if (row < _boardSize - 1) valid.add(emptyIndex + _boardSize); // Abajo
-    if (col > 0) valid.add(emptyIndex - 1); // Izquierda
-    if (col < _boardSize - 1) valid.add(emptyIndex + 1); // Derecha
+    if (row > 0) valid.add(emptyIndex - _boardSize);
+    if (row < _boardSize - 1) valid.add(emptyIndex + _boardSize);
+    if (col > 0) valid.add(emptyIndex - 1);
+    if (col < _boardSize - 1) valid.add(emptyIndex + 1);
 
     return valid;
   }
@@ -99,53 +105,58 @@ class _JuegoScreenState extends State<JuegoScreen> {
     if (_timerRunning) return;
     _timerRunning = true;
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      setState(() {
-        _secondsElapsed++;
-      });
+      setState(() => _secondsElapsed++);
     });
   }
 
-  // Lógica al tocar una ficha
   void _onTileTap(int index) {
     if (_isWon) return;
 
     int emptyIndex = _board.indexOf(0);
     if (_getValidMoves(emptyIndex).contains(index)) {
-      if (!_timerRunning) {
-        _startTimer();
-      }
+      if (!_timerRunning) _startTimer();
 
       setState(() {
-        // Intercambiar la ficha seleccionada con el espacio vacío
         _board[emptyIndex] = _board[index];
         _board[index] = 0;
         _moves++;
-
-        // Verificar si ganó
         _checkWinCondition();
       });
     }
   }
 
-  // Condición de victoria: ordenada de 1 a N*N-1 y el 0 al final
-  void _checkWinCondition() {
+  Future<void> _checkWinCondition() async {
     for (int i = 0; i < _board.length - 1; i++) {
       if (_board[i] != i + 1) return;
     }
 
-    // Si llega aquí, ¡ganó!
     _isWon = true;
     _timer?.cancel();
     _timerRunning = false;
 
-    // Mostrar diálogo de victoria
+    final prefs = await SharedPreferences.getInstance();
+    String difficultyKey = _boardSize == 3
+        ? 'facil'
+        : (_boardSize == 4 ? 'medio' : 'dificil');
+    String dateStr =
+        '${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}';
+
+    await prefs.setString(
+      '${difficultyKey}_time',
+      _formatTime(_secondsElapsed),
+    );
+    await prefs.setInt('${difficultyKey}_moves', _moves);
+    await prefs.setString('${difficultyKey}_date', dateStr);
+
+    if (!mounted) return;
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: const Text('¡Felicidades! 🎉'),
         content: Text(
-          'Has completado el puzzle en:\n\n⏱️ Tiempo: ${_formatTime(_secondsElapsed)}\n🔢 Movimientos: $_moves',
+          'Has completado el puzzle ($_boardSize x $_boardSize):\n\n⏱️ Tiempo: ${_formatTime(_secondsElapsed)}\n🔢 Movimientos: $_moves\n💾 ¡Guardado en marcadores!',
         ),
         actions: [
           TextButton(
@@ -158,7 +169,7 @@ class _JuegoScreenState extends State<JuegoScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              Navigator.pop(context); // Volver al menú
+              Navigator.pop(context);
             },
             child: const Text('Menú Principal'),
           ),
@@ -171,6 +182,62 @@ class _JuegoScreenState extends State<JuegoScreen> {
     int mins = seconds ~/ 60;
     int secs = seconds % 60;
     return '${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+  }
+
+  // Renderiza el fragmento de la imagen recortado correctamente
+  Widget _buildImageTile(int tileValue, Color primaryColor) {
+    int correctIndex = tileValue - 1;
+    int row = correctIndex ~/ _boardSize;
+    int col = correctIndex % _boardSize;
+
+    double alignX = -1.0 + (col / (_boardSize - 1)) * 2.0;
+    double alignY = -1.0 + (row / (_boardSize - 1)) * 2.0;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          FractionallySizedBox(
+            widthFactor: _boardSize.toDouble(),
+            heightFactor: _boardSize.toDouble(),
+            child: AlignmentTemplate(
+              alignX: alignX,
+              alignY: alignY,
+              child: Image.network(
+                _sampleImageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: primaryColor,
+                  child: const Center(
+                    child: Icon(Icons.broken_image, color: Colors.white),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 4,
+            left: 6,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.black54,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                '$tileValue',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -203,7 +270,6 @@ class _JuegoScreenState extends State<JuegoScreen> {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            // Panel de estadísticas (Tiempo y Movimientos)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -222,8 +288,6 @@ class _JuegoScreenState extends State<JuegoScreen> {
               ],
             ),
             const SizedBox(height: 24),
-
-            // Tablero del Puzzle
             Expanded(
               child: Center(
                 child: AspectRatio(
@@ -248,24 +312,44 @@ class _JuegoScreenState extends State<JuegoScreen> {
                       itemBuilder: (context, index) {
                         int tileValue = _board[index];
                         if (tileValue == 0) {
-                          // Espacio vacío
                           return Container(
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                               color: Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
                             ),
                           );
+                        }
+
+                        if (_pieceStyle == 'imagen') {
+                          return GestureDetector(
+                            onTap: () => _onTileTap(index),
+                            child: _buildImageTile(tileValue, primaryColor),
+                          );
+                        }
+
+                        Color tileColor = primaryColor;
+                        if (_pieceStyle == 'colorido') {
+                          List<Color> retroColors = [
+                            Colors.teal,
+                            Colors.indigo,
+                            Colors.deepOrange,
+                            Colors.brown,
+                            Colors.purple,
+                            Colors.blueGrey,
+                            Colors.pink,
+                          ];
+                          tileColor =
+                              retroColors[tileValue % retroColors.length];
                         }
 
                         return GestureDetector(
                           onTap: () => _onTileTap(index),
                           child: Container(
                             decoration: BoxDecoration(
-                              color: primaryColor,
+                              color: tileColor,
                               borderRadius: BorderRadius.circular(10),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.1),
+                                  color: Colors.black.withValues(alpha: 0.15),
                                   blurRadius: 4,
                                   offset: const Offset(0, 2),
                                 ),
@@ -276,7 +360,7 @@ class _JuegoScreenState extends State<JuegoScreen> {
                                 '$tileValue',
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 22,
+                                  fontSize: 20,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -329,5 +413,23 @@ class _JuegoScreenState extends State<JuegoScreen> {
         ],
       ),
     );
+  }
+}
+
+class AlignmentTemplate extends StatelessWidget {
+  final double alignX;
+  final double alignY;
+  final Widget child;
+
+  const AlignmentTemplate({
+    super.key,
+    required this.alignX,
+    required this.alignY,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(alignment: Alignment(alignX, alignY), child: child);
   }
 }
