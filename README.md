@@ -2,8 +2,8 @@
 
 Rompecabezas deslizante moderno hecho con **Flutter**: tableros de 3×3 a 6×6, dificultad que se adapta a cómo juegas, récords locales, temas claro y oscuro, y accesibilidad para lectores de pantalla.
 
-[![Flutter CI](https://github.com/Yangel19901/sliding-puzzle/actions/workflows/flutter.yml/badge.svg)](https://github.com/Yangel19901/sliding-puzzle/actions/workflows/flutter.yml)
-[![Playwright](https://github.com/Yangel19901/sliding-puzzle/actions/workflows/playwright.yml/badge.svg)](https://github.com/Yangel19901/sliding-puzzle/actions/workflows/playwright.yml)
+[![Flutter CI](https://github.com/fenix1091/Microproyecto-15-Puzzle/actions/workflows/flutter.yml/badge.svg)](https://github.com/fenix1091/Microproyecto-15-Puzzle/actions/workflows/flutter.yml)
+[![Playwright](https://github.com/fenix1091/Microproyecto-15-Puzzle/actions/workflows/playwright.yml/badge.svg)](https://github.com/fenix1091/Microproyecto-15-Puzzle/actions/workflows/playwright.yml)
 
 ---
 
@@ -60,8 +60,8 @@ Si prefieres elegir el nivel, desactiva **Dificultad adaptativa** en **Configura
 ### Pasos
 
 ```bash
-git clone https://github.com/Yangel19901/sliding-puzzle.git
-cd sliding-puzzle
+git clone https://github.com/fenix1091/Microproyecto-15-Puzzle.git
+cd Microproyecto-15-Puzzle
 flutter pub get
 flutter run -d chrome
 ```
@@ -77,7 +77,7 @@ En Android o iOS, conecta un dispositivo o emulador y ejecuta `flutter run`. Hac
 
 ### ⚠️ Si usas Windows
 
-- Clona el proyecto en una ruta **sin acentos ni espacios** (por ejemplo `C:\dev\sliding-puzzle`). Con caracteres como `ó` en la ruta, `flutter analyze` y `flutter build` fallan.
+- Clona el proyecto en una ruta **sin acentos ni espacios** (por ejemplo `C:\dev\Microproyecto-15-Puzzle`). Con caracteres como `ó` en la ruta, `flutter analyze` y `flutter build` fallan.
 - Usa **PowerShell** o CMD, no Git Bash.
 - Si `flutter pub get` pide *symlink support*, activa el **Modo de desarrollador**: Configuración → Sistema → Para desarrolladores.
 
