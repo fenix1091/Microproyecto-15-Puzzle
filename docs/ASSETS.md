@@ -198,6 +198,7 @@ Hoy no hay ninguna prueba que reproduzca realmente un sonido.
 4. **Vibración en Android sin verificar.** `AndroidManifest.xml` no declara el permiso `VIBRATE` y no se pudo probar en un dispositivo. Los métodos de `HapticFeedback` usan la retroalimentación háptica del sistema, que normalmente no lo requiere, pero hay que confirmarlo.
 5. **Android, iOS y Windows no se compilaron** (faltan el Android SDK y Visual Studio). El comportamiento de la [§6](#6-diferencias-por-plataforma) para esas plataformas sale de leer el código de `audioplayers`, no de ejecutarlo.
 6. **Iconos de la app sin personalizar** (ver [§7](#iconos-de-la-aplicación)).
+7. **La versión web descarga fuentes de Google en tiempo de ejecución.** El proyecto no incluye ninguna fuente de texto: CanvasKit pide Roboto y una fuente de símbolos de respaldo a `fonts.gstatic.com`. El símbolo `★` del logo no existe en Roboto, así que depende de esa descarga: en la primera carga se ve un instante como un recuadro vacío (se comprobó en la versión publicada) y, sin conexión a ese dominio, se quedaría así. Se arregla incluyendo una fuente propia en `assets/fonts/` o cambiando `★` por un icono.
 
 ## 10. Cómo añadir o cambiar un asset
 
