@@ -57,12 +57,38 @@ void main() {
       current: DifficultyLevel.medium,
     );
     expect(fast.shuffleMultiplier, 1.2);
-    expect(fast.timeMultiplier, inInclusiveRange(.8, 1.2));
+    expect(fast.timeMultiplier, .8);
     final slow = e.evaluate(
       history: [r(90, 60)],
       current: DifficultyLevel.medium,
     );
     expect(slow.shuffleMultiplier, closeTo(.9667, .001));
     expect(slow.timeMultiplier, closeTo(1.1333, .001));
+  });
+  test('losses and abandonments take the slow fine-tuning branch', () {
+    GameResult result(GameOutcome outcome) => GameResult(
+      level: DifficultyLevel.medium,
+      boardSize: 4,
+      moves: 1,
+      duration: const Duration(seconds: 1),
+      outcome: outcome,
+      minSolutionDepth: 25,
+      playedAt: DateTime.utc(2026),
+      timeLimit: const Duration(minutes: 6),
+    );
+    const engine = DifficultyEngine();
+    for (final outcome in [GameOutcome.lost, GameOutcome.abandoned]) {
+      final decision = engine.evaluate(
+        history: [result(outcome)],
+        current: DifficultyLevel.medium,
+      );
+      expect(decision.shuffleMultiplier, lessThanOrEqualTo(1));
+      expect(decision.timeMultiplier, greaterThan(1));
+    }
+    final olderAbandon = engine.evaluate(
+      history: [result(GameOutcome.won), result(GameOutcome.abandoned)],
+      current: DifficultyLevel.medium,
+    );
+    expect(olderAbandon.shuffleMultiplier, greaterThan(1));
   });
 }

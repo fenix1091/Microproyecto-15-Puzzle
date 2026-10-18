@@ -1,7 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sliding_puzzle/core/errors/failure.dart';
 import 'package:sliding_puzzle/core/result.dart';
 import 'package:sliding_puzzle/core/utils/clock.dart';
 import 'package:sliding_puzzle/core/utils/random_source.dart';
+import 'package:sliding_puzzle/features/game/domain/entities/difficulty_decision.dart';
 import 'package:sliding_puzzle/features/game/domain/entities/difficulty_level.dart';
 import 'package:sliding_puzzle/features/game/domain/entities/game_result.dart';
 import 'package:sliding_puzzle/features/game/domain/entities/game_session.dart';
@@ -16,6 +18,7 @@ import 'package:sliding_puzzle/features/leaderboard/domain/repositories/leaderbo
 
 class History implements GameHistoryRepository {
   final List<GameResult> items = [];
+  Failure? loadFailure;
   @override
   Future<Result<void>> save(GameResult r) async {
     items.insert(0, r);
@@ -26,12 +29,16 @@ class History implements GameHistoryRepository {
   Future<Result<List<GameResult>>> getHistory({
     DifficultyLevel? level,
     int? limit,
-  }) async => Result.ok(
-    items
-        .where((r) => level == null || r.level == level)
-        .take(limit ?? items.length)
-        .toList(),
-  );
+  }) async {
+    if (loadFailure case final failure?) return Result.err(failure);
+    return Result.ok(
+      items
+          .where((r) => level == null || r.level == level)
+          .take(limit ?? items.length)
+          .toList(),
+    );
+  }
+
   @override
   Future<Result<void>> clear() async {
     items.clear();
@@ -120,7 +127,8 @@ void main() {
         )(DifficultyLevel.hard)).valueOrNull!.level,
         DifficultyLevel.hard,
       );
-      history.items.add(
+      history.items.insert(
+        0,
         GameResult(
           level: DifficultyLevel.easy,
           boardSize: 3,
@@ -136,6 +144,53 @@ void main() {
       expect(stats.wins, 1);
       expect(stats.averageMoves, 20);
       expect(stats.bestWinStreak, 1);
+      expect(stats.winStreak, 1);
+      expect(stats.lossStreak, 0);
+      history.items.add(
+        GameResult(
+          level: DifficultyLevel.easy,
+          boardSize: 3,
+          moves: 22,
+          duration: const Duration(minutes: 4),
+          outcome: GameOutcome.abandoned,
+          minSolutionDepth: 10,
+          playedAt: DateTime.utc(2025),
+          timeLimit: const Duration(minutes: 5),
+        ),
+      );
+      final newerWinStats = (await GetPlayerStats(history)()).valueOrNull!;
+      expect(newerWinStats.winStreak, 1);
+      expect(newerWinStats.lossStreak, 0);
+      history.items.insert(
+        0,
+        GameResult(
+          level: DifficultyLevel.easy,
+          boardSize: 3,
+          moves: 1,
+          duration: const Duration(seconds: 5),
+          outcome: GameOutcome.lost,
+          minSolutionDepth: 10,
+          playedAt: DateTime.utc(2026, 2),
+          timeLimit: const Duration(minutes: 5),
+        ),
+      );
+      history.items.insert(
+        1,
+        GameResult(
+          level: DifficultyLevel.easy,
+          boardSize: 3,
+          moves: 3,
+          duration: const Duration(seconds: 7),
+          outcome: GameOutcome.abandoned,
+          minSolutionDepth: 10,
+          playedAt: DateTime.utc(2026, 1, 2),
+          timeLimit: const Duration(minutes: 5),
+        ),
+      );
+      final newestLossStats = (await GetPlayerStats(history)()).valueOrNull!;
+      expect(newestLossStats.winStreak, 0);
+      expect(newestLossStats.lossStreak, 2);
+      expect(newestLossStats.bestWinStreak, 1);
     },
   );
   test(
@@ -163,6 +218,20 @@ void main() {
       )(currentLevel: DifficultyLevel.easy)).valueOrNull!;
       expect(setup.decision.level, DifficultyLevel.medium);
       expect(setup.session.config.level, DifficultyLevel.medium);
+    },
+  );
+  test(
+    'StartGame falls back to the current level when history cannot load',
+    () async {
+      final history = History()
+        ..loadFailure = const StorageFailure('read failed');
+      final setup = (await StartGame(
+        engine: const DifficultyEngine(),
+        shuffler: Shuffler(BoardRandom()),
+        history: history,
+      )(currentLevel: DifficultyLevel.hard)).valueOrNull!;
+      expect(setup.decision.level, DifficultyLevel.hard);
+      expect(setup.decision.trend, DifficultyTrend.unchanged);
     },
   );
 }

@@ -9,7 +9,6 @@ import '../../domain/repositories/leaderboard_repository.dart';
 class HistoryLeaderboardRepository implements LeaderboardRepository {
   const HistoryLeaderboardRepository(this._history);
 
-  // ignore: unused_field
   final GameHistoryRepository _history;
 
   @override

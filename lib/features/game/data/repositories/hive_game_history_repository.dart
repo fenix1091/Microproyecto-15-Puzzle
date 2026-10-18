@@ -14,7 +14,6 @@ class HiveGameHistoryRepository implements GameHistoryRepository {
 
   static const boxName = 'game_history';
 
-  // ignore: unused_field
   final Box<Map<dynamic, dynamic>> _box;
 
   @override

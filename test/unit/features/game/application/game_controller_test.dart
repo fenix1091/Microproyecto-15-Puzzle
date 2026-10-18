@@ -4,11 +4,13 @@ import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sliding_puzzle/app/di/providers.dart';
+import 'package:sliding_puzzle/core/errors/failure.dart';
 import 'package:sliding_puzzle/core/result.dart';
 import 'package:sliding_puzzle/core/services/feedback_service.dart';
 import 'package:sliding_puzzle/core/utils/clock.dart';
 import 'package:sliding_puzzle/core/utils/random_source.dart';
 import 'package:sliding_puzzle/features/game/application/game_controller.dart';
+import 'package:sliding_puzzle/features/game/application/game_state.dart';
 import 'package:sliding_puzzle/features/game/domain/entities/board.dart';
 import 'package:sliding_puzzle/features/game/domain/entities/difficulty_config.dart';
 import 'package:sliding_puzzle/features/game/domain/entities/difficulty_decision.dart';
@@ -39,6 +41,7 @@ class FixedRandom implements RandomSource {
 
 class MemoryHistory implements GameHistoryRepository {
   final records = <GameResult>[];
+  Failure? saveFailure;
   @override
   Future<Result<void>> clear() async {
     records.clear();
@@ -57,12 +60,15 @@ class MemoryHistory implements GameHistoryRepository {
   );
   @override
   Future<Result<void>> save(GameResult result) async {
+    if (saveFailure case final failure?) return Result.err(failure);
     records.insert(0, result);
     return const Result.ok(null);
   }
 }
 
 class MemoryLeaderboard implements LeaderboardRepository {
+  MemoryLeaderboard({this.failSubmit = false});
+  final bool failSubmit;
   @override
   Future<Result<List<LeaderboardEntry>>> getTop(
     DifficultyLevel level, {
@@ -73,8 +79,9 @@ class MemoryLeaderboard implements LeaderboardRepository {
     DifficultyLevel level,
   ) async => const Result.ok(null);
   @override
-  Future<Result<bool>> submit(GameResult result) async =>
-      Result.ok(result.outcome == GameOutcome.won);
+  Future<Result<bool>> submit(GameResult result) async => failSubmit
+      ? const Result.err(StorageFailure('leaderboard failed'))
+      : Result.ok(result.outcome == GameOutcome.won);
 }
 
 class MemorySettings implements SettingsRepository {
@@ -119,6 +126,7 @@ class FixedStartGame extends StartGame {
   final DifficultyDecision decision;
   DifficultyLevel? currentSeen;
   DifficultyLevel? manualSeen;
+  Failure? startFailure;
   @override
   Future<Result<GameSetup>> call({
     required DifficultyLevel currentLevel,
@@ -126,6 +134,7 @@ class FixedStartGame extends StartGame {
   }) async {
     currentSeen = currentLevel;
     manualSeen = manualLevel;
+    if (startFailure case final failure?) return Result.err(failure);
     return Result.ok(GameSetup(session: session, decision: decision));
   }
 }
@@ -147,7 +156,11 @@ GameSession session({Duration? limit}) {
 }
 
 class Fixture {
-  Fixture({UserSettings settings = const UserSettings(), Duration? limit}) {
+  Fixture({
+    UserSettings settings = const UserSettings(),
+    Duration? limit,
+    bool failSubmit = false,
+  }) {
     clock = TestClock();
     history = MemoryHistory();
     prefs = MemorySettings(settings);
@@ -164,7 +177,9 @@ class Fixture {
       overrides: [
         clockProvider.overrideWithValue(clock),
         gameHistoryRepositoryProvider.overrideWithValue(history),
-        leaderboardRepositoryProvider.overrideWithValue(MemoryLeaderboard()),
+        leaderboardRepositoryProvider.overrideWithValue(
+          MemoryLeaderboard(failSubmit: failSubmit),
+        ),
         settingsRepositoryProvider.overrideWithValue(prefs),
         feedbackServiceProvider.overrideWithValue(feedback),
         startGameProvider.overrideWithValue(start),
@@ -223,7 +238,12 @@ void main() {
     fixture.controller.tap(1);
     expect(fixture.container.read(gameControllerProvider).invalidTapCount, 1);
     expect(fixture.feedback.invalids, 1);
+    expect(fixture.container.read(gameControllerProvider).invalidTapIndex, 1);
     fixture.controller.tap(7);
+    expect(
+      fixture.container.read(gameControllerProvider).invalidTapIndex,
+      isNull,
+    );
     expect(
       fixture.container.read(gameControllerProvider).session!.status,
       GameStatus.playing,
@@ -238,6 +258,9 @@ void main() {
     expect(fixture.history.records.single.outcome, GameOutcome.won);
     expect(fixture.feedback.wins, 1);
     expect(fixture.prefs.settings.currentLevel, DifficultyLevel.master);
+    fixture.controller.tap(7);
+    expect(fixture.container.read(gameControllerProvider).session!.moves, 2);
+    expect(fixture.feedback.moves, 2);
     await fixture.close();
   });
 
@@ -298,4 +321,63 @@ void main() {
     expect(fixture.history.records.single.outcome, GameOutcome.abandoned);
     await fixture.close();
   });
+  test(
+    'start clears the old session first and leaves a clean failed state',
+    () async {
+      final fixture = Fixture();
+      await fixture.loadSettings();
+      await fixture.controller.start();
+      expect(fixture.container.read(gameControllerProvider).session, isNotNull);
+      fixture.start.startFailure = const StorageFailure('start failed');
+      final pending = fixture.controller.start();
+      expect(
+        fixture.container.read(gameControllerProvider),
+        const GameState(isStarting: true),
+      );
+      await pending;
+      final state = fixture.container.read(gameControllerProvider);
+      expect(state.session, isNull);
+      expect(state.isStarting, isFalse);
+      expect(state.failure, isA<StorageFailure>());
+      await fixture.close();
+    },
+  );
+
+  test(
+    'explicit difficulty does not overwrite adaptive current level',
+    () async {
+      final fixture = Fixture(
+        settings: const UserSettings(currentLevel: DifficultyLevel.hard),
+      );
+      await fixture.loadSettings();
+      await fixture.controller.start(level: DifficultyLevel.medium);
+      fixture.controller.tap(7);
+      fixture.controller.tap(8);
+      await Future<void>.delayed(Duration.zero);
+      expect(fixture.container.read(gameControllerProvider).result, isNotNull);
+      expect(fixture.prefs.settings.currentLevel, DifficultyLevel.hard);
+      await fixture.close();
+    },
+  );
+
+  test(
+    'finish persistence errors still publish a navigable in-memory result',
+    () async {
+      for (final failureKind in ['history', 'leaderboard']) {
+        final fixture = Fixture(failSubmit: failureKind == 'leaderboard');
+        if (failureKind == 'history') {
+          fixture.history.saveFailure = const StorageFailure('history failed');
+        }
+        await fixture.loadSettings();
+        await fixture.controller.start();
+        fixture.controller.tap(7);
+        fixture.controller.tap(8);
+        await Future<void>.delayed(Duration.zero);
+        final state = fixture.container.read(gameControllerProvider);
+        expect(state.result, isNotNull, reason: failureKind);
+        expect(state.failure, isA<StorageFailure>(), reason: failureKind);
+        await fixture.close();
+      }
+    },
+  );
 }

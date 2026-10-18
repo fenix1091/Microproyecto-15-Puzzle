@@ -8,7 +8,6 @@ import 'heuristics.dart';
 class Shuffler {
   const Shuffler(this._random);
 
-  // ignore: unused_field
   final RandomSource _random;
 
   /// Walks [DifficultyConfig.shuffleMoves] steps without immediately undoing

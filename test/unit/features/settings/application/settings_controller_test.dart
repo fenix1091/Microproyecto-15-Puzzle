@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sliding_puzzle/app/di/providers.dart';
+import 'package:sliding_puzzle/core/errors/failure.dart';
 import 'package:sliding_puzzle/core/result.dart';
 import 'package:sliding_puzzle/core/services/feedback_service.dart';
 import 'package:sliding_puzzle/features/settings/application/settings_controller.dart';
@@ -11,12 +12,14 @@ class MemorySettings implements SettingsRepository {
   MemorySettings(this.value);
   UserSettings value;
   int writes = 0;
+  Failure? saveFailure;
   @override
   Future<Result<UserSettings>> load() async => Result.ok(value);
   @override
   Future<Result<void>> save(UserSettings settings) async {
-    value = settings;
     writes++;
+    if (saveFailure case final failure?) return Result.err(failure);
+    value = settings;
     return const Result.ok(null);
   }
 }
@@ -68,4 +71,25 @@ void main() {
     expect(repository.writes, 1);
     expect(feedback.configured.last, (false, false));
   });
+  test(
+    'keeps optimistic AsyncData and exposes failure when persistence fails',
+    () async {
+      final repository = MemorySettings(const UserSettings());
+      repository.saveFailure = const StorageFailure('settings unavailable');
+      final container = ProviderContainer(
+        overrides: [settingsRepositoryProvider.overrideWithValue(repository)],
+      );
+      addTearDown(container.dispose);
+      await container.read(settingsControllerProvider.future);
+      final notifier = container.read(settingsControllerProvider.notifier);
+      await notifier.change(
+        (settings) => settings.copyWith(soundEnabled: false),
+      );
+      expect(
+        container.read(settingsControllerProvider).requireValue.soundEnabled,
+        isFalse,
+      );
+      expect(notifier.lastFailure, isA<StorageFailure>());
+    },
+  );
 }

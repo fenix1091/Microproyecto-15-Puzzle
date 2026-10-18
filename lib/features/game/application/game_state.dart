@@ -23,8 +23,9 @@ class GameState extends Equatable {
   /// Why this level/config was picked (show "¡Subiste de nivel!" etc.).
   final DifficultyDecision? decision;
 
-  /// Set once the game is won/lost/abandoned and persisted; the UI navigates
-  /// to the result screen when this becomes non-null.
+  /// Set once a game is won, lost, or abandoned, including when persistence
+  /// fails. The UI navigates to the result screen only for wins and losses;
+  /// abandoning returns to the menu.
   final GameResult? result;
 
   final bool isStarting;
@@ -47,13 +48,16 @@ class GameState extends Equatable {
     int? invalidTapCount,
     bool clearResult = false,
     bool clearFailure = false,
+    bool clearInvalidTap = false,
   }) => GameState(
     session: session ?? this.session,
     decision: decision ?? this.decision,
     result: clearResult ? null : (result ?? this.result),
     isStarting: isStarting ?? this.isStarting,
     failure: clearFailure ? null : (failure ?? this.failure),
-    invalidTapIndex: invalidTapIndex ?? this.invalidTapIndex,
+    invalidTapIndex: clearInvalidTap
+        ? null
+        : (invalidTapIndex ?? this.invalidTapIndex),
     invalidTapCount: invalidTapCount ?? this.invalidTapCount,
   );
 

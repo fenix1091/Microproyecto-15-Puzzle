@@ -10,6 +10,7 @@ import '../../settings/domain/entities/user_settings.dart';
 import '../domain/entities/difficulty_level.dart';
 import '../domain/entities/game_result.dart';
 import '../domain/entities/game_session.dart';
+import '../domain/services/heuristics.dart';
 import 'game_state.dart';
 
 final gameControllerProvider = NotifierProvider<GameController, GameState>(
@@ -27,6 +28,7 @@ final gameControllerProvider = NotifierProvider<GameController, GameState>(
 class GameController extends Notifier<GameState> {
   Timer? _timer;
   DateTime? _lastTick;
+  bool _levelWasExplicit = false;
 
   @override
   GameState build() {
@@ -72,13 +74,13 @@ class GameController extends Notifier<GameState> {
     final result = await ref.read(finishGameProvider)(session, outcome);
     result.fold(
       (value) {
-        state = state.copyWith(result: value);
+        state = state.copyWith(result: value, clearFailure: true);
         ref.invalidate(leaderboardProvider(value.level));
         ref.invalidate(personalBestProvider(value.level));
         ref.invalidate(playerStatsProvider);
         ref.invalidate(nextDifficultyProvider(value.level));
         final settings = ref.read(settingsControllerProvider).value;
-        if (settings?.adaptiveDifficulty ?? false) {
+        if (!_levelWasExplicit && (settings?.adaptiveDifficulty ?? false)) {
           ref
               .read(settingsControllerProvider.notifier)
               .change(
@@ -89,7 +91,21 @@ class GameController extends Notifier<GameState> {
         }
       },
       (failure) {
-        state = state.copyWith(failure: failure);
+        ref.invalidate(leaderboardProvider(session.config.level));
+        ref.invalidate(personalBestProvider(session.config.level));
+        ref.invalidate(playerStatsProvider);
+        ref.invalidate(nextDifficultyProvider(session.config.level));
+        final fallback = GameResult(
+          level: session.config.level,
+          boardSize: session.config.boardSize,
+          moves: session.moves,
+          duration: session.elapsed,
+          outcome: outcome,
+          minSolutionDepth: Heuristics.lowerBound(session.initialBoard),
+          playedAt: ref.read(clockProvider).now(),
+          timeLimit: session.config.timeLimit,
+        );
+        state = state.copyWith(result: fallback, failure: failure);
       },
     );
   }
@@ -97,11 +113,8 @@ class GameController extends Notifier<GameState> {
   /// Generates a new game. [level] forces a manual level; otherwise settings
   /// decide (adaptive engine or `manualLevel`).
   Future<void> start({DifficultyLevel? level}) async {
-    state = state.copyWith(
-      isStarting: true,
-      clearResult: true,
-      clearFailure: true,
-    );
+    state = const GameState(isStarting: true);
+    _levelWasExplicit = level != null;
     final settings =
         ref.read(settingsControllerProvider).value ?? const UserSettings();
     final current = settings.adaptiveDifficulty
@@ -117,18 +130,18 @@ class GameController extends Notifier<GameState> {
         state = GameState(session: value.session, decision: value.decision);
       },
       (failure) {
-        state = state.copyWith(isStarting: false, failure: failure);
+        state = GameState(failure: failure);
       },
     );
   }
 
   void tap(int index) {
     final session = state.session;
-    if (session == null) return;
+    if (session == null || session.isFinished) return;
     final moved = ref.read(moveTileProvider)(session, index);
     moved.fold(
       (next) {
-        state = state.copyWith(session: next, invalidTapIndex: null);
+        state = state.copyWith(session: next, clearInvalidTap: true);
         ref.read(feedbackServiceProvider).tileMoved();
         if (next.status == GameStatus.playing) _startTimer();
         if (next.status == GameStatus.won) {

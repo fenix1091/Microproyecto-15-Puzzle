@@ -10,7 +10,6 @@ import '../../domain/repositories/settings_repository.dart';
 class PrefsSettingsRepository implements SettingsRepository {
   const PrefsSettingsRepository(this._prefs);
 
-  // ignore: unused_field
   final SharedPreferences _prefs;
 
   @override

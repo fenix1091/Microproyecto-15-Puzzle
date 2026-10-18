@@ -43,6 +43,8 @@ class StartGame {
     final historyResult = manualLevel == null
         ? await _history.getHistory(limit: _engine.window)
         : null;
+    // If local history cannot be read, keep the current tier and let the game
+    // start; this degrades gracefully instead of blocking play on storage.
     final history = historyResult?.valueOrNull ?? const [];
     final decision = manualLevel == null
         ? _engine.evaluate(history: history, current: currentLevel)

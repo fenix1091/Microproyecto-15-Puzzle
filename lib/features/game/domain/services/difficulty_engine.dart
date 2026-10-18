@@ -28,31 +28,30 @@ class DifficultyEngine {
         trend: DifficultyTrend.unchanged,
       );
     }
-    var winRun = 0, lossRun = 0;
+    var winRun = 0;
+    var lossRun = 0;
+    var streakOpen = true;
+    bool? streakIsWin;
     final winRatios = <double>[];
     final recentRatios = <double>[];
     for (final result in recent) {
-      final ratio =
-          result.timeLimit == null || result.timeLimit!.inMicroseconds == 0
-          ? 0.0
-          : result.duration.inMicroseconds / result.timeLimit!.inMicroseconds;
+      final ratio = _timeRatio(result);
+      recentRatios.add(ratio);
       if (result.outcome == GameOutcome.won) {
         winRatios.add(ratio);
-      } else {}
-      recentRatios.add(ratio);
-    }
-    for (final result in recent) {
-      if (result.outcome == GameOutcome.won) {
-        winRun++;
-      } else {
-        break;
       }
-    }
-    for (final result in recent) {
-      if (result.outcome != GameOutcome.won) {
-        lossRun++;
-      } else {
-        break;
+      if (streakOpen) {
+        final isWin = result.outcome == GameOutcome.won;
+        streakIsWin ??= isWin;
+        if (isWin == streakIsWin) {
+          if (streakIsWin) {
+            winRun++;
+          } else {
+            lossRun++;
+          }
+        } else {
+          streakOpen = false;
+        }
       }
     }
     final average = recentRatios.reduce((a, b) => a + b) / recentRatios.length;
@@ -72,24 +71,24 @@ class DifficultyEngine {
       );
     }
     final last = recent.first;
-    final timeRatio =
-        last.timeLimit == null || last.timeLimit!.inMicroseconds == 0
-        ? 0.0
-        : last.duration.inMicroseconds / last.timeLimit!.inMicroseconds;
+    final timeRatio = _timeRatio(last);
     final moveRatio = last.minSolutionDepth == 0
         ? 0.0
         : last.moves / last.minSolutionDepth;
-    if (timeRatio < .75 && moveRatio < 2.5) {
-      final amount = (0.75 - timeRatio).clamp(0.0, .15) / .75;
+    // Fine tuning uses the last game; only a win can enter the fast branch.
+    if (last.outcome == GameOutcome.won && timeRatio < .75 && moveRatio < 2.5) {
+      final amount = ((.75 - timeRatio) / .75).clamp(0.0, 1.0);
       return DifficultyDecision(
         level: current,
         trend: DifficultyTrend.unchanged,
-        shuffleMultiplier: (1.1 + amount).clamp(.8, 1.2),
+        shuffleMultiplier: (1.1 + amount * .1).clamp(.8, 1.2),
         timeMultiplier: (.9 - amount * .1).clamp(.8, 1.2),
       );
     }
-    if (timeRatio > .85) {
-      final amount = ((timeRatio - .85) / .15).clamp(0.0, 1.0) * .1;
+    if (last.outcome != GameOutcome.won || timeRatio > .85) {
+      final amount = last.outcome == GameOutcome.won
+          ? ((timeRatio - .85) / .15).clamp(0.0, 1.0) * .1
+          : 0.0;
       return DifficultyDecision(
         level: current,
         trend: DifficultyTrend.unchanged,
@@ -99,6 +98,11 @@ class DifficultyEngine {
     }
     return DifficultyDecision(level: current, trend: DifficultyTrend.unchanged);
   }
+
+  static double _timeRatio(GameResult result) =>
+      result.timeLimit == null || result.timeLimit!.inMicroseconds == 0
+      ? 0.0
+      : result.duration.inMicroseconds / result.timeLimit!.inMicroseconds;
 
   /// Applies [decision] to the base config of its level.
   DifficultyConfig configFor(DifficultyDecision decision) {

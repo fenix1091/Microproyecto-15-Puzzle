@@ -10,9 +10,7 @@ import '../services/difficulty_engine.dart';
 class ComputeNextDifficulty {
   const ComputeNextDifficulty({required this._engine, required this._history});
 
-  // ignore: unused_field
   final DifficultyEngine _engine;
-  // ignore: unused_field
   final GameHistoryRepository _history;
 
   Future<Result<DifficultyDecision>> call(DifficultyLevel current) async {
@@ -27,34 +25,42 @@ class ComputeNextDifficulty {
 class GetPlayerStats {
   const GetPlayerStats(this._history);
 
-  // ignore: unused_field
   final GameHistoryRepository _history;
 
   Future<Result<PlayerStats>> call() async {
     final loaded = await _history.getHistory();
     return loaded.fold((items) {
       if (items.isEmpty) return const Result.ok(PlayerStats.empty);
-      var wins = 0,
-          totalMicros = 0,
-          moves = 0,
-          winRun = 0,
-          lossRun = 0,
-          best = 0;
+      var wins = 0;
+      var totalMicros = 0;
+      var moves = 0;
+      var runningWins = 0;
+      var best = 0;
+      var currentWins = 0;
+      var currentLosses = 0;
+      var currentStreakOpen = true;
+      final latestWasWin = items.first.outcome == GameOutcome.won;
       for (final game in items) {
         if (game.outcome == GameOutcome.won) {
           wins++;
           totalMicros += game.duration.inMicroseconds;
           moves += game.moves;
-        }
-      }
-      for (final game in items) {
-        if (game.outcome == GameOutcome.won) {
-          winRun++;
-          lossRun = 0;
-          if (winRun > best) best = winRun;
+          runningWins++;
+          if (runningWins > best) best = runningWins;
         } else {
-          lossRun++;
-          winRun = 0;
+          runningWins = 0;
+        }
+        if (currentStreakOpen) {
+          final isWin = game.outcome == GameOutcome.won;
+          if (isWin == latestWasWin) {
+            if (latestWasWin) {
+              currentWins++;
+            } else {
+              currentLosses++;
+            }
+          } else {
+            currentStreakOpen = false;
+          }
         }
       }
       return Result.ok(
@@ -65,8 +71,8 @@ class GetPlayerStats {
               ? Duration.zero
               : Duration(microseconds: totalMicros ~/ wins),
           averageMoves: wins == 0 ? 0 : moves / wins,
-          winStreak: winRun,
-          lossStreak: lossRun,
+          winStreak: currentWins,
+          lossStreak: currentLosses,
           bestWinStreak: best,
         ),
       );
