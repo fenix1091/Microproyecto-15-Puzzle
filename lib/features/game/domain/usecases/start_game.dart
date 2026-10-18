@@ -30,11 +30,16 @@ class StartGame {
     required this._engine,
     required this._shuffler,
     required this._history,
-  });
+    int? qaShuffleMoves,
+    int? qaTimeLimitSeconds,
+  }) : _qaShuffleMoves = qaShuffleMoves ?? AppEnv.qaShuffleMoves,
+       _qaTimeLimitSeconds = qaTimeLimitSeconds ?? AppEnv.qaTimeLimitSeconds;
 
   final DifficultyEngine _engine;
   final Shuffler _shuffler;
   final GameHistoryRepository _history;
+  final int _qaShuffleMoves;
+  final int _qaTimeLimitSeconds;
 
   Future<Result<GameSetup>> call({
     required DifficultyLevel currentLevel,
@@ -55,17 +60,17 @@ class StartGame {
     var config = manualLevel == null
         ? _engine.configFor(decision)
         : DifficultyConfig.base(manualLevel);
-    if (AppEnv.qaShuffleMoves > 0 || AppEnv.qaTimeLimitSeconds > 0) {
+    if (_qaShuffleMoves > 0 || _qaTimeLimitSeconds > 0) {
       config = DifficultyConfig(
         level: config.level,
         boardSize: config.boardSize,
-        shuffleMoves: AppEnv.qaShuffleMoves > 0
-            ? AppEnv.qaShuffleMoves
+        shuffleMoves: _qaShuffleMoves > 0
+            ? _qaShuffleMoves
             : config.shuffleMoves,
-        timeLimit: AppEnv.qaTimeLimitSeconds > 0
-            ? const Duration(seconds: AppEnv.qaTimeLimitSeconds)
+        timeLimit: _qaTimeLimitSeconds > 0
+            ? Duration(seconds: _qaTimeLimitSeconds)
             : config.timeLimit,
-        minSolutionDepth: config.minSolutionDepth,
+        minSolutionDepth: _qaShuffleMoves > 0 ? 0 : config.minSolutionDepth,
       );
     }
     final board = _shuffler.shuffle(config);

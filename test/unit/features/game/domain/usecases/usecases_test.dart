@@ -9,6 +9,7 @@ import 'package:sliding_puzzle/features/game/domain/entities/game_result.dart';
 import 'package:sliding_puzzle/features/game/domain/entities/game_session.dart';
 import 'package:sliding_puzzle/features/game/domain/repositories/game_history_repository.dart';
 import 'package:sliding_puzzle/features/game/domain/services/difficulty_engine.dart';
+import 'package:sliding_puzzle/features/game/domain/services/heuristics.dart';
 import 'package:sliding_puzzle/features/game/domain/services/shuffler.dart';
 import 'package:sliding_puzzle/features/game/domain/usecases/finish_game.dart';
 import 'package:sliding_puzzle/features/game/domain/usecases/start_game.dart';
@@ -90,6 +91,20 @@ void main() {
       expect(setup.session.board.isSolved, isFalse);
     },
   );
+  test('QA shuffle override produces a board one move from solved', () async {
+    final result = await StartGame(
+      engine: const DifficultyEngine(),
+      shuffler: Shuffler(BoardRandom()),
+      history: History(),
+      qaShuffleMoves: 1,
+    )(currentLevel: DifficultyLevel.easy, manualLevel: DifficultyLevel.easy);
+
+    final setup = result.valueOrNull!;
+    expect(setup.session.config.shuffleMoves, 1);
+    expect(setup.session.config.minSolutionDepth, 0);
+    expect(setup.session.board.isSolved, isFalse);
+    expect(Heuristics.lowerBound(setup.session.board), 1);
+  });
   test('FinishGame records win after leaderboard comparison and marks personal best', () async {
     final history = History();
     final setup =
