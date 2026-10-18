@@ -1,11 +1,11 @@
 {
-    "name": "sliding_puzzle",
-    "short_name": "sliding_puzzle",
+    "name": "Sliding Puzzle",
+    "short_name": "Puzzle",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#2563EB",
+    "theme_color": "#2563EB",
+    "description": "Rompecabezas deslizante de 3x3 a 6x6 con dificultad adaptativa.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
