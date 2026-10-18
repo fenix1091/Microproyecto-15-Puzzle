@@ -4,6 +4,9 @@ Rompecabezas deslizante moderno hecho con **Flutter**: tableros de 3×3 a 6×6, 
 
 [![Flutter CI](https://github.com/fenix1091/Microproyecto-15-Puzzle/actions/workflows/flutter.yml/badge.svg)](https://github.com/fenix1091/Microproyecto-15-Puzzle/actions/workflows/flutter.yml)
 [![Playwright](https://github.com/fenix1091/Microproyecto-15-Puzzle/actions/workflows/playwright.yml/badge.svg)](https://github.com/fenix1091/Microproyecto-15-Puzzle/actions/workflows/playwright.yml)
+[![Pages](https://github.com/fenix1091/Microproyecto-15-Puzzle/actions/workflows/pages.yml/badge.svg)](https://github.com/fenix1091/Microproyecto-15-Puzzle/actions/workflows/pages.yml)
+
+**▶ Jugar en el navegador:** https://fenix1091.github.io/Microproyecto-15-Puzzle/
 
 ---
 
@@ -139,3 +142,4 @@ Opciones de compilación para QA: `QA=true` expone el árbol de accesibilidad en
 |---|---|
 | `flutter.yml` | formato, análisis, tests con cobertura, build web y test de integración |
 | `playwright.yml` | e2e en Chromium, Firefox, WebKit, Pixel 5, iPhone 12 y teléfono en horizontal |
+| `pages.yml` | compila la versión web (`--base-href "/Microproyecto-15-Puzzle/"`) y la publica en GitHub Pages en cada push a `main` |
