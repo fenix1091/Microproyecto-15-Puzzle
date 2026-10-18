@@ -25,42 +25,70 @@ class Board extends Equatable {
 
   /// True when every tile is in its home cell.
   bool get isSolved {
-    // TODO(backend): implement.
-    throw UnimplementedError();
+    for (var i = 0; i < tiles.length - 1; i++) {
+      if (tiles[i] != i + 1) return false;
+    }
+    return tiles.last == 0;
   }
 
   /// True when [index] shares a row or column with the empty cell (and is
   /// not the empty cell). Tapping it slides every tile between it and the
   /// empty cell, like the reference game.
   bool canMove(int index) {
-    // TODO(backend): implement.
-    throw UnimplementedError();
+    if (index < 0 || index >= length || index == emptyIndex) return false;
+    return rowOf(index) == rowOf(emptyIndex) ||
+        colOf(index) == colOf(emptyIndex);
   }
 
   /// Indices whose tiles would slide if [index] were tapped, ordered from
   /// the one nearest the empty cell. Empty when the move is invalid.
   List<int> slideGroup(int index) {
-    // TODO(backend): implement.
-    throw UnimplementedError();
+    if (!canMove(index)) return const [];
+    final result = <int>[];
+    final er = rowOf(emptyIndex), ec = colOf(emptyIndex);
+    final tr = rowOf(index), tc = colOf(index);
+    final dr = (tr - er).sign, dc = (tc - ec).sign;
+    var r = er + dr, c = ec + dc;
+    while (r != tr || c != tc) {
+      result.add(indexOf(r, c));
+      r += dr;
+      c += dc;
+    }
+    result.add(index);
+    return result;
   }
 
   /// Returns the board after tapping [index]. Throws [StateError] if
   /// [canMove] is false.
   Board move(int index) {
-    // TODO(backend): implement.
-    throw UnimplementedError();
+    final group = slideGroup(index);
+    if (group.isEmpty) throw StateError('Invalid move');
+    final next = List<int>.of(tiles);
+    var hole = emptyIndex;
+    for (final tileIndex in group) {
+      next[hole] = next[tileIndex];
+      hole = tileIndex;
+    }
+    next[hole] = 0;
+    return Board(size: size, tiles: next);
   }
 
   /// Indices adjacent (up/down/left/right) to the empty cell.
   List<int> neighborsOfEmpty() {
-    // TODO(backend): implement.
-    throw UnimplementedError();
+    final r = rowOf(emptyIndex), c = colOf(emptyIndex);
+    return [
+      if (r > 0) indexOf(r - 1, c),
+      if (c > 0) indexOf(r, c - 1),
+      if (c + 1 < size) indexOf(r, c + 1),
+      if (r + 1 < size) indexOf(r + 1, c),
+    ];
   }
 
   /// True when the tile at [index] sits in its home cell.
   bool isTileHome(int index) {
-    // TODO(backend): implement.
-    throw UnimplementedError();
+    if (index < 0 || index >= length) return false;
+    final tile = tiles[index];
+    return tile == 0 ? index == length - 1 : index == tile - 1;
   }
 
   @override

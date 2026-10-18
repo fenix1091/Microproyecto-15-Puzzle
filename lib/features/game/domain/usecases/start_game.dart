@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/config/app_env.dart';
 import '../../../../core/result.dart';
+import '../entities/difficulty_config.dart';
 import '../entities/difficulty_decision.dart';
 import '../entities/difficulty_level.dart';
 import '../entities/game_session.dart';
@@ -30,18 +32,46 @@ class StartGame {
     required this._history,
   });
 
-  // ignore: unused_field
   final DifficultyEngine _engine;
-  // ignore: unused_field
   final Shuffler _shuffler;
-  // ignore: unused_field
   final GameHistoryRepository _history;
 
   Future<Result<GameSetup>> call({
     required DifficultyLevel currentLevel,
     DifficultyLevel? manualLevel,
-  }) {
-    // TODO(backend): implement; apply AppEnv QA overrides (time limit, shuffle moves).
-    throw UnimplementedError();
+  }) async {
+    final historyResult = manualLevel == null
+        ? await _history.getHistory(limit: _engine.window)
+        : null;
+    final history = historyResult?.valueOrNull ?? const [];
+    final decision = manualLevel == null
+        ? _engine.evaluate(history: history, current: currentLevel)
+        : DifficultyDecision(
+            level: manualLevel,
+            trend: DifficultyTrend.unchanged,
+          );
+    var config = manualLevel == null
+        ? _engine.configFor(decision)
+        : DifficultyConfig.base(manualLevel);
+    if (AppEnv.qaShuffleMoves > 0 || AppEnv.qaTimeLimitSeconds > 0) {
+      config = DifficultyConfig(
+        level: config.level,
+        boardSize: config.boardSize,
+        shuffleMoves: AppEnv.qaShuffleMoves > 0
+            ? AppEnv.qaShuffleMoves
+            : config.shuffleMoves,
+        timeLimit: AppEnv.qaTimeLimitSeconds > 0
+            ? const Duration(seconds: AppEnv.qaTimeLimitSeconds)
+            : config.timeLimit,
+        minSolutionDepth: config.minSolutionDepth,
+      );
+    }
+    final board = _shuffler.shuffle(config);
+    return Result.ok(
+      GameSetup(
+        session: GameSession(initialBoard: board, board: board, config: config),
+        decision: decision,
+      ),
+    );
   }
 }

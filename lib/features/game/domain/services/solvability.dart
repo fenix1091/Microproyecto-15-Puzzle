@@ -1,14 +1,19 @@
 import '../entities/board.dart';
 
-/// Parity check: odd widths need an even inversion count; even widths need
-/// `inversions + emptyRowFromBottom` to be odd (row counted from 1).
 bool isSolvable(Board board) {
-  // TODO(backend): implement.
-  throw UnimplementedError();
+  final inversions = countInversions(board);
+  if (board.size.isOdd) return inversions.isEven;
+  final rowFromBottom = board.size - board.rowOf(board.emptyIndex);
+  return (inversions + rowFromBottom).isOdd;
 }
 
-/// Number of tile pairs (a, b) with a before b and a > b, ignoring the empty cell.
 int countInversions(Board board) {
-  // TODO(backend): implement.
-  throw UnimplementedError();
+  var count = 0;
+  for (var i = 0; i < board.length; i++) {
+    if (board.tiles[i] == 0) continue;
+    for (var j = i + 1; j < board.length; j++) {
+      if (board.tiles[j] != 0 && board.tiles[i] > board.tiles[j]) count++;
+    }
+  }
+  return count;
 }

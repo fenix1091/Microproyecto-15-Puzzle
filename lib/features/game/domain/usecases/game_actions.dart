@@ -1,3 +1,4 @@
+import '../../../../core/errors/failure.dart';
 import '../../../../core/result.dart';
 import '../entities/game_session.dart';
 
@@ -8,8 +9,21 @@ class MoveTile {
   const MoveTile();
 
   Result<GameSession> call(GameSession session, int index) {
-    // TODO(backend): implement.
-    throw UnimplementedError();
+    if (session.status != GameStatus.ready &&
+        session.status != GameStatus.playing) {
+      return const Result.err(GameStateFailure('Game is not active'));
+    }
+    if (!session.board.canMove(index)) {
+      return const Result.err(InvalidMoveFailure());
+    }
+    final board = session.board.move(index);
+    return Result.ok(
+      session.copyWith(
+        board: board,
+        moves: session.moves + 1,
+        status: board.isSolved ? GameStatus.won : GameStatus.playing,
+      ),
+    );
   }
 }
 
@@ -19,8 +33,16 @@ class TickGame {
   const TickGame();
 
   GameSession call(GameSession session, Duration delta) {
-    // TODO(backend): implement.
-    throw UnimplementedError();
+    if (session.status != GameStatus.playing) return session;
+    final elapsed = session.elapsed + delta;
+    return session.copyWith(
+      elapsed: elapsed,
+      status:
+          session.config.timeLimit != null &&
+              elapsed >= session.config.timeLimit!
+          ? GameStatus.lost
+          : session.status,
+    );
   }
 }
 
@@ -29,8 +51,9 @@ class PauseGame {
   const PauseGame();
 
   Result<GameSession> call(GameSession session) {
-    // TODO(backend): implement.
-    throw UnimplementedError();
+    return session.status == GameStatus.playing
+        ? Result.ok(session.copyWith(status: GameStatus.paused))
+        : const Result.err(GameStateFailure('Game is not playing'));
   }
 }
 
@@ -39,8 +62,9 @@ class ResumeGame {
   const ResumeGame();
 
   Result<GameSession> call(GameSession session) {
-    // TODO(backend): implement.
-    throw UnimplementedError();
+    return session.status == GameStatus.paused
+        ? Result.ok(session.copyWith(status: GameStatus.playing))
+        : const Result.err(GameStateFailure('Game is not paused'));
   }
 }
 
@@ -49,7 +73,10 @@ class RestartGame {
   const RestartGame();
 
   GameSession call(GameSession session) {
-    // TODO(backend): implement.
-    throw UnimplementedError();
+    return GameSession(
+      initialBoard: session.initialBoard,
+      board: session.initialBoard,
+      config: session.config,
+    );
   }
 }
