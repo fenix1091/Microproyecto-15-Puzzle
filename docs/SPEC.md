@@ -14,7 +14,7 @@ Juego de rompecabezas deslizante (3×3 a 6×6) moderno, accesible y desafiante, 
 | Tema | Decisión |
 |---|---|
 | Plataformas | Web (verificada localmente), Android, iOS, Windows (requieren SDK/VS) |
-| Ruta de trabajo | **Ejecutar Flutter desde `D:\dev\sliding_puzzle`** (junction). La ruta real contiene "ó" y rompe `flutter analyze` / `flutter build`. |
+| Ruta de trabajo | **Ejecutar Flutter desde `D:\dev\sliding_puzzle`** (junction) y **desde PowerShell**. La ruta real contiene "ó" y rompe `flutter analyze` / `flutter build`; desde Git Bash el hook de native assets falla porque la ruta del SDK tiene espacios. |
 | Estado / DI | `flutter_riverpod` 3 (Notifier / AsyncNotifier, sin codegen) |
 | Navegación | `go_router` 18 |
 | Persistencia | `hive_ce` (historial, mapas planos sin adapters) + `shared_preferences` (ajustes) |
@@ -38,7 +38,8 @@ presentation ──► application ──► domain ◄── data
 - **data**: implementaciones de repositorios (Hive, SharedPreferences), DTOs.
 - **application**: controladores Riverpod (`Notifier`) que orquestan casos de uso y exponen estado.
 - **presentation**: widgets y páginas. Solo leen providers de `application` y `app/di`. **Nunca** importan `data/`.
-- **app/di/providers.dart**: único lugar donde se instancian implementaciones (DIP). Tests usan `ProviderScope(overrides:)`.
+- **app/di/providers.dart**: único lugar donde se instancian implementaciones (DIP). Tests usan `ProviderScope(overrides:)`. `application/` puede leer los providers de casos de uso desde `app/di` (nunca `data/` directamente).
+- **app/routes.dart**: constantes `AppRoutes` en un archivo hoja; las páginas lo importan sin depender de `router.dart`.
 
 SOLID: cada caso de uso es una clase con `call()` (SRP); repositorios como `interface` (DIP/ISP); nuevas fuentes de datos se agregan sin tocar el dominio (OCP).
 
@@ -161,12 +162,14 @@ La dificultad modifica: **tamaño del tablero** (por nivel), **complejidad de me
 
 ```
 /splash ──(precarga OK)──► /menu
-/menu ──► /game ──(ganar/perder/abandonar)──► /result ──► /game (jugar de nuevo) | /menu
+/menu ──► /game ──(ganar/perder)──► /result ──► /game (jugar de nuevo) | /menu
+/game ──(Salir confirmado = abandonar)──► /menu
 /menu ──► /leaderboard | /settings | /instructions
 ```
 
 - Si `appDependenciesProvider` no terminó (recarga web o deep link), cualquier ruta redirige a `/splash`. `/result` sin `extra` redirige a `/menu`.
-- Pausa: overlay sobre `/game`. Salir: diálogo de confirmación (botón y `PopScope`). Ir a segundo plano → pausa automática (`AppLifecycleListener`).
+- Pausa: overlay sobre `/game`, solo disponible mientras se juega. Salir: diálogo de confirmación (botón y `PopScope`). Si ya se movió alguna ficha, se registra como abandono (cuenta como derrota). Si no, no se registra nada. Ir a segundo plano → pausa automática (`AppLifecycleListener`).
+- Al iniciar una partida el estado se reinicia (`isStarting`). Si falla la generación o el guardado, la UI muestra un error con "Reintentar"; un fallo al guardar no impide ver el resultado.
 
 ## 10. Diseño UI
 
